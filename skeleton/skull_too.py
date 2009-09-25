@@ -2,7 +2,7 @@
 
 
 def cross_bones():
-    print('Skull')
+    print('Skull Too')
 
 
 def run():

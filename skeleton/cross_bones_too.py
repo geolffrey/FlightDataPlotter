@@ -2,7 +2,7 @@
 
 
 def cross_bones():
-    print('Skull')
+	print('Cross Bones Too')
 
 
 def run():
@@ -11,5 +11,3 @@ def run():
 	
 if __name__ == '__main__':
 	run()
-
-
