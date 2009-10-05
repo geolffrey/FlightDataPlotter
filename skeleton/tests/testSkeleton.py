@@ -14,6 +14,7 @@ class testSkeleton(unittest.TestCase):
         setUp is called before each test function execution.
         """
         pass        
+
         
     def tearDown(self):
         """
@@ -38,11 +39,8 @@ class testSkeleton(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(testSkeleton))
-    return suite
-    
+    return unittest.makeSuite(testSkeleton, 'test')
 
-if __name__ == '__main__':    
-    unittest.TextTestRunner(verbosity=2).run(suite())
 
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
