@@ -1,0 +1,11 @@
+include docs/*.*
+include skeleton/data/*.dat
+include *.py
+include setup.bmp
+include README
+include LICENSE
+include CHANGES
+include requirements.txt
+exclude .bzr
+exclude build
+exclude dist

@@ -3,6 +3,13 @@ CHANGES
 =======
 
 -----
+0.1.1
+-----
+
+* Migrated to pip and distribute. Suitable for integration with Jenkins.
+
+
+-----
 0.1.0
 -----
 

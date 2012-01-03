@@ -9,8 +9,10 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-# http://cburgmer.posterous.com/pip-requirementstxt-and-setuppy
 def parse_requirements(file_name):
+    """
+    Extract all dependency names from requirements.txt.
+    """
     requirements = []
     for line in open(file_name, 'r').read().split('\n'):
         if re.match(r'(\s*#)|(\s*$)', line):
@@ -27,6 +29,9 @@ def parse_requirements(file_name):
     return requirements
 
 def parse_dependency_links(file_name):
+    """
+    Extract all URLs for packages not found on PyPI.
+    """
     dependency_links = []
     for line in open(file_name, 'r').read().split('\n'):
         if re.match(r'\s*-[ef]\s+', line):
@@ -38,20 +43,17 @@ def parse_dependency_links(file_name):
 from skeleton import __version__ as VERSION
 
 setup(
-    # === Meta data ===
-    
-    # Required meta data
+    # Required
     name='Skeleton',
     version = VERSION,
     url='http://www.flightdataservices.com/',
     
-    # Optional meta data   
+    # Optional
     author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',            
     description='A Skeleton Python Package',    
     long_description=open('README').read(),    
     download_url='http://www.flightdataservices.com/',
-    classifiers='',
     platforms='',
     license='',
 
@@ -103,128 +105,22 @@ setup(
     # specified via the distutils' MANIFEST.in file. (They can also be tracked 
     # by another revision control system, using an appropriate plugin. 
 
-    #include_package_data = True, 
+    include_package_data = True, 
 
     # If you want finer-grained control over what files are included (for 
     # example, if you have documentation files in your package directories and 
     # want to exclude them from installation), then you can also use the 
-    # package_data keyword, e.g.:
-
-    package_data = {
-        # If any package contains *.txt or *.rst files, include them:
-        '': ['*.txt', '*.rst', '*.py'],
-        # And include any *.dat files found in the 'data' directory of the 
-        # 'skeleton' package amd all the files in the 'scripts' directory
-        # of the 'skeleton' package too.
-        'skeleton': ['data/*.dat'],
-        'skeleton': ['scripts/*'],
-    },
-
-    # === Test Suite ===
-
-    # A string naming a unittest.TestCase subclass (or a package or module 
-    # containing one or more of them, or a method of such a subclass), or naming 
-    # a function that can be called with no arguments and returns a 
-    # unittest.TestSuite. If the named suite is a module, and the module has an 
-    # additional_tests() function, it is called and the results are added to the 
-    # tests to be run. If the named suite is a package, any submodules and 
-    # subpackages are recursively added to the overall test suite.
-
-    # Specifying this argument enables use of the test command to run the 
-    # specified test suite, e.g. via setup.py test. See the section on the test 
-    # command below for more details.
-
-    test_suite = 'nose.collector',
-        
-    # === Dependancies ===        
-        
-    # Dependencies on other Python modules and packages can be specified by 
-    # supplying the requires keyword argument to setup(). The value must be a 
-    # list of strings. Each string specifies a package that is required, 
-    # and optionally what versions are sufficient.
-
-    # To specify that any version of a module or package is required, the string 
-    # should consist entirely of the module or package name. 
-
-    # If specific versions are required, a sequence of qualifiers can be supplied 
-    # in parentheses. Each qualifier may consist of a comparison operator and a 
-    # version number. The accepted comparison operators are:
-    
-    #  <    >    ==
-    #  <=   >=   !=
-
-    # A string or list of strings specifying what other distributions need to be 
-    # installed when this one is.
+    # package_data keyword.
+    # - http://docs.python.org/distutils/setupscript.html#installing-package-data
+            
+    # Parse the 'requirements.txt' file to determine the dependencies.
     install_requires = parse_requirements('requirements.txt'), 
-         
-    # Sometimes a project has "recommended" dependencies, that are not required 
-    # for all uses of the project. For example, a project might offer optional 
-    # reStructuredText support if docutils is installed. These optional features 
-    # are called "extras", and setuptools allows you to define their requirements 
-    # as well. In this way, other projects that require these optional features 
-    # can force the additional requirements to be installed, by naming the 
-    # desired extras in their install_requires.
-      
-    # A dictionary mapping names of "extras" (optional features of your project) 
-    # to strings or lists of strings specifying what other distributions must be 
-    # installed to support those features.    
-    #extras_require = {
-    #    'reST': ["docutils>=0.3"],
-    #},
-
-    # A string or list of strings specifying what other distributions need to be 
-    # present in order for the setup script to run. setuptools will attempt to 
-    # obtain these (even going so far as to download them using EasyInstall) 
-    # before processing the rest of the setup script or commands. 
-    # This argument is needed if you are using distutils extensions as part of 
-    # your build process; for example, extensions that process setup() arguments 
-    # and turn them into EGG-INFO metadata files.
-
-    # (Note: projects listed in setup_requires will NOT be automatically 
-    # installed on the system where the setup script is being run. They are 
-    # simply downloaded to the setup directory if they're not locally available 
-    # already. If you want them to be installed, as well as being available when 
-    # the setup script is run, you should add them to install_requires and 
-    # setup_requires.)
+    dependency_links = parse_dependency_links('requirements.txt'),
     setup_requires = ['nose>=1.0'],
-
-    # If your project's tests need one or more additional packages besides those 
-    # needed to install it, you can use this option to specify them. It should 
-    # be a string or list of strings specifying what other distributions need to 
-    # be present for the package's tests to run.     
-    # NOTE! Test requirements should be put in requirements.txt
-    #tests_require = [],
-
-
-    # If your project depends on packages that aren't registered in PyPI, you 
-    # may still be able to depend on them, as long as they are available for 
-    # download as an egg, in the standard distutils sdist format, or as a single 
-    # .py file. You just need to add some URLs to the dependency_links argument 
-    # to setup().
-
-    # The URLs must be either:
-    #  - direct download URLs, or
-    #  - the URLs of web pages that contain direct download links
-
-    # In general, it's better to link to web pages, because it is usually less 
-    # complex to update a web page than to release a new version of your 
-    # project. You can also use a SourceForge showfiles.php link in the case 
-    # where a package you depend on is distributed via SourceForge.
-
-    # The dependency_links option takes the form of a list of URL strings. 
-    # For example, the below will cause EasyInstall to search the specified page 
-    # for eggs or source distributions, if the package's dependencies aren't 
-    # already installed:
-
-    dependency_links = [
-        'http://vindictive.flightdataservices.com/Nest/dist/'
-    ],
+    test_suite = 'nose.collector',
 
     # === Script Creation ===
-    
-    # So far we have been dealing with pure and non-pure Python modules, which 
-    # are usually not run by themselves but imported by scripts.
-    
+        
     # Scripts are files containing Python source code, intended to be started 
     # from the command line. Scripts don't require Distutils to do anything very 
     # complicated. The only clever feature is that if the first line of the 
@@ -233,10 +129,10 @@ setup(
     # default, it is replaced with the current interpreter location. 
 
     # The scripts option simply is a list of files to be handled in this way. 
-    scripts=['skeleton/scripts/skull', 'skeleton/scripts/cross_bones'],
+    scripts=['skeleton/scripts/skull.py', 'skeleton/scripts/cross_bones.py'],
 
-    # === Entry Points (are better than 'scripts') ===
-
+    # === Entry Points ===
+    
     # Packaging and installing scripts can be a bit awkward using the method 
     # above For one thing, there's no easy way to have a script's filename match 
     # local conventions on both Windows and POSIX platforms. For another, you 
@@ -250,7 +146,7 @@ setup(
     # that indicate what function the generated script should import and run. 
     # It is possible to create console scripts and GUI scripts.        
         
-    # Two notations are popular, the first is easy to read and maintain.
+    # Two notations are popular, I'll only document the most readable.
     
     entry_points = """
         [console_scripts]
@@ -260,18 +156,7 @@ setup(
         #[gui_scripts]
         #skull_gui = skeleton.gui.skull_gui:run
         """,
-        
-    #entry_points = {
-    #    'console_scripts': [
-    #        'cross_bones_too = skeleton.scripts.cross_bones_too:run',
-    #        'skull_too = skeleton.scripts.skull_too:run',
-    #    ],
-    #    'gui_scripts': [
-    #        'skull_gui = skeleton.gui.skull_gui:run',
-    #    ]
-    #},
-
-       
+               
     # A boolean flag specifying whether the project can be safely installed and 
     # run from a zip file. If this argument is not supplied, the bdist_egg 
     # command will have to analyze all of your project's contents for possible 
@@ -281,5 +166,27 @@ setup(
     # False unless you really know why you want a zipped Egg.
     zip_safe = False,
     
+    # I've included a selection of classifiers that are typical for FDS, simply
+    # delete the inappropriate entries or add new classifiers using the 
+    # following URL for reference.
+    #  - http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers = [
+        "Development Status :: 3 - Alpha",
+    	"Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",  	
+        "Environment :: Console",
+        "Environment :: Web Environment",
+        "Framework :: Django",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: Other/Proprietary License",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Operating System :: OS Independent",
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Utilities",
+    	],        
     )
-
