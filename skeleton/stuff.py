@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 
-def skull():
-    print('Skull')
-
-
 def run():
-    skull()
+    print("Stuff")
 
 
 if __name__ == '__main__':
