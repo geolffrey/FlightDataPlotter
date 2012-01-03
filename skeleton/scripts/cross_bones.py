@@ -2,12 +2,12 @@
 
 
 def cross_bones():
-	print('Cross Bones')
+    print('Cross Bones')
 
 
 def run():
-	cross_bones()
+    cross_bones()
 
-	
+
 if __name__ == '__main__':
 	run()

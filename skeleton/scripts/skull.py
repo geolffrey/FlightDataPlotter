@@ -6,10 +6,8 @@ def cross_bones():
 
 
 def run():
-	cross_bones()
+    cross_bones()
 
-	
+
 if __name__ == '__main__':
-	run()
-
-
+    run()
