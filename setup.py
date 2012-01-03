@@ -150,8 +150,8 @@ setup(
     
     entry_points = """
         [console_scripts]
-        cross_bones_too = skeleton.cross_bones_too:run
-        skull_too = skeleton.skull_too:run
+        cross_bones_too = skeleton.scripts.cross_bones:run
+        skull_too = skeleton.scripts.skull:run
         
         #[gui_scripts]
         #skull_gui = skeleton.gui.skull_gui:run
