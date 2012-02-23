@@ -38,7 +38,7 @@ pip install --upgrade pip
 #fi
 
 #pip uninstall ${DISTRIBUTION}
-pip install "file:///${WORKSPACE}#egg=`basename ${PWD}`[coverage,doc,quality]"
+pip install "file:///${WORKSPACE}#egg=Skeleton[coverage,doc,quality]"
 
 #pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
 
