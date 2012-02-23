@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+DISTRIBUTION=`basename ${WORKSPACE}`
 PACKAGE="skeleton"
 VIRTVER="2.7"
 
@@ -37,11 +38,10 @@ pip install --upgrade pip
 #    pip install --upgrade -r requirements.txt
 #fi
 
-pip uninstall `basename ${WORKSPACE}`
-pip install "file:///`pwd`#egg=`basename ${WORKSPACE}`[coverage,doc,quality]"
+pip uninstall ${DISTRIBUTION}
+pip install "file:///${WORKSPACE}#egg=${DISTRIBUTION}[coverage,doc,quality]"
 
 #pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
-
 
 # Run any additional setup steps
 if [ -x jenkins/setup-extra.sh ]; then
