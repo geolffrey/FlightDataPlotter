@@ -30,7 +30,7 @@ export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
 pip install --upgrade pip
 
 # Install the package and the Jenkins extras
-pip install file:///${WORKSPACE}#egg=Skeleton[coverage,doc,quality]
+pip install --upgrade file:///${WORKSPACE}#egg=${PACKAGE}[coverage,doc,quality]
 
 # Run any additional setup steps
 if [ -x jenkins/setup-extra.sh ]; then
