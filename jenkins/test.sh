@@ -38,8 +38,8 @@ pip install --upgrade pip
 #    pip install --upgrade -r requirements.txt
 #fi
 
-pip uninstall ${DISTRIBUTION}
-pip install "file:///${WORKSPACE}#egg=${DISTRIBUTION}[coverage,doc,quality]"
+pip uninstall Skeleton
+pip install "file:///`pwd`#egg=Skeleton[coverage,doc,quality]"
 
 #pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
 
