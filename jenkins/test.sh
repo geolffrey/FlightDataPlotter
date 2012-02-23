@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-DISTRIBUTION=`basename ${WORKSPACE}`
 PACKAGE="skeleton"
 VIRTVER="2.7"
 
@@ -38,8 +37,8 @@ pip install --upgrade pip
 #    pip install --upgrade -r requirements.txt
 #fi
 
-pip uninstall ${DISTRIBUTION}
-pip install "file:///${WORKSPACE}#egg=Skeleton[coverage,doc,quality]"
+#pip uninstall ${DISTRIBUTION}
+pip install "file:///${WORKSPACE}#egg=`basename ${PWD}`[coverage,doc,quality]"
 
 #pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
 
