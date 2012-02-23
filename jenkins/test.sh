@@ -29,18 +29,8 @@ cd ${WORKSPACE}
 export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
 pip install --upgrade pip
 
-# Install testing and code metric tools
-#pip install --upgrade clonedigger pep8 pyflakes pylint sphinx
-
-# Install requirements
-#if [ -f requirements.txt ]; then
-#    pip install --upgrade -r requirements.txt
-#fi
-
-#pip uninstall ${DISTRIBUTION}
-pip install "file:///${WORKSPACE}#egg=Skeleton[coverage,doc,quality]"
-
-#pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
+DISTRIBUTION=`basename ${WORKSPACE}`
+pip install file:///${WORKSPACE}#egg=${DISTRIBUTION}[coverage,doc,quality]
 
 # Run any additional setup steps
 if [ -x jenkins/setup-extra.sh ]; then
