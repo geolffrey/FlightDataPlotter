@@ -34,9 +34,10 @@ if [ ${PYLINT} -eq 1 ]; then
 fi
 
 # Install requirements
-if [ -f requirements.txt ]; then
-    pip install --upgrade -r requirements.txt
-fi
+#if [ -f requirements.txt ]; then
+#    pip install --upgrade -r requirements.txt
+#fi
+pip install --upgrade ${WORKSPACE}/
 
 # Run any additional setup steps
 if [ -x jenkins/setup-extra.sh ]; then
@@ -49,10 +50,9 @@ if [ -f setup.py ]; then
 fi
 
 # Remove existing output files
-rm nosetests.xml pylint.log pep8.log cpd.xml sloccount.log || :
+rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log
 
 # Run the tests and coverage
-#nosetests --with-xcoverage --with-xunit --cover-package=${PACKAGE} --cover-erase
 if [ -f setup.py ]; then
     python setup.py test
 fi

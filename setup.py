@@ -106,10 +106,10 @@ setup(
     # Parse the 'requirements.txt' file to determine the dependencies.
     install_requires = parse_requirements('requirements.txt'), 
     dependency_links = parse_dependency_links('requirements.txt'),
-    setup_requires = ['nose>=1.0'],
-    tests_require = ['coverage', 'mock'],
+    setup_requires = ['nose>=1.0', 'nosexcover'],
+    tests_require = ['mock'],
     extras_require = {
-        'test': ['coverage', 'mock'],
+        'test': ['mock'],
     },
     test_suite = 'nose.collector',
 

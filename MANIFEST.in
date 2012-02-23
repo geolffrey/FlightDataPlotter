@@ -8,11 +8,12 @@ include requirements*.txt
 recursive-include doc *
 prune doc/_build
 exclude .bzr
-exclude jenkins
 exclude build
 exclude dist
-exclude nosetests.xml
+exclude jenkins
+exclude .coverage
 exclude coverage.xml
+exclude nosetests.xml
 
 # Project specific
 include skeleton/data/*.dat

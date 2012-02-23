@@ -29,11 +29,10 @@ build
 *.egg-info
 *.py[co]
 
-# Tests
-cover
+# Jenkins
+.coverage
+coverage.xml
 nosetests.xml
-
-# Metrics
 cpd.xml
 pep8.log
 pylint.log
