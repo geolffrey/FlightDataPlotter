@@ -8,13 +8,11 @@ CHANGES
 
 * Migrated to pip and distribute. Suitable for integration with Jenkins.
 
-
 -----
 0.1.0
 -----
 
 * Initial version created and documented to some extent. 
-
 
 -----
 0.0.0

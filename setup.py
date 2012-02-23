@@ -42,18 +42,18 @@ def parse_dependency_links(file_name):
 
 from skeleton import __version__ as VERSION
 
+# Reference
+#  - http://packages.python.org/distribute/setuptools.html
+
 setup(
-    # Required
     name='Skeleton',
     version = VERSION,
     url='http://www.flightdataservices.com/',
-    
-    # Optional
     author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',            
     description='A Skeleton Python Package',    
     long_description=open('README').read(),    
-    download_url='http://www.flightdataservices.com/',
+    download_url='',
     platforms='',
     license='',
 
@@ -91,22 +91,12 @@ setup(
     # to remember to modify your setup script whenever your project grows 
     # additional top-level packages or subpackages.
 
-    packages = find_packages(),      
+    packages = find_packages(exclude=['distribute_setup']),
                 
-    # Often, additional files need to be installed into a package. These files 
-    # are often data that's closely related to the package's implementation, or 
-    # text files containing documentation that might be of interest to 
-    # programmers using the package. These files are called package data.
-
-    # Setuptools offers three ways to specify data files to be included in your 
-    # packages. First, you can simply use the include_package_data keyword. This 
-    # tells setuptools to install any data files it finds in your packages. The 
-    # data files must be under CVS or Subversion control, or else they must be 
-    # specified via the distutils' MANIFEST.in file. (They can also be tracked 
-    # by another revision control system, using an appropriate plugin. 
-
+    # You can specify data files to be included in your packages. Use 
+    # the include_package_data keyword. This tells setuptools to install any 
+    # data files it finds specified in the distutils' MANIFEST.in file.
     include_package_data = True, 
-
     # If you want finer-grained control over what files are included (for 
     # example, if you have documentation files in your package directories and 
     # want to exclude them from installation), then you can also use the 
@@ -117,6 +107,10 @@ setup(
     install_requires = parse_requirements('requirements.txt'), 
     dependency_links = parse_dependency_links('requirements.txt'),
     setup_requires = ['nose>=1.0'],
+    tests_require = ['coverage', 'mock'],
+    extras_require = {
+        'test': ['coverage', 'mock'],
+    },
     test_suite = 'nose.collector',
 
     # === Script Creation ===
@@ -155,15 +149,7 @@ setup(
         
         #[gui_scripts]
         #skull_gui = skeleton.gui.skull_gui:run
-        """,
-               
-    # A boolean flag specifying whether the project can be safely installed and 
-    # run from a zip file. If this argument is not supplied, the bdist_egg 
-    # command will have to analyze all of your project's contents for possible 
-    # problems each time it buids an egg. 
-    
-    # There are potential compatibility issue with zipped Eggs. So default to 
-    # False unless you really know why you want a zipped Egg.
+        """,               
     zip_safe = False,
     
     # I've included a selection of classifiers that are typical for FDS, simply

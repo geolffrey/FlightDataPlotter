@@ -1,19 +1,18 @@
-include doc/Makefile
-include doc/make.bat
-include doc/source/*.*
-include doc/source/_static/*.*
-include doc/source/_template/*.*
-include skeleton/data/*.dat
-include *.py
-include requirements.txt
+include AUTHORS
 include CHANGES
 include LICENSE
 include README
 include TODO
-
+include *.py
+include requirements*.txt
+recursive-include doc *
+prune doc/_build
 exclude .bzr
 exclude jenkins
 exclude build
 exclude dist
 exclude nosetests.xml
 exclude coverage.xml
+
+# Project specific
+include skeleton/data/*.dat

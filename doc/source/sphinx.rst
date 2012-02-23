@@ -46,14 +46,14 @@ Sphinx can also add configuration for epub output:
 
 Please indicate if you want to use one of the following Sphinx extensions:
 > autodoc: automatically insert docstrings from modules (y/N) [n]: y
-> doctest: automatically test code snippets in doctest blocks (y/N) [n]:
-> intersphinx: link between Sphinx documentation of different projects (y/N) [n]:
+> doctest: automatically test code snippets in doctest blocks (y/N) [n]: y
+> intersphinx: link between Sphinx documentation of different projects (y/N) [n]: y
 > todo: write "todo" entries that can be shown or hidden on build (y/N) [n]: y
 > coverage: checks for documentation coverage (y/N) [n]: y
-> pngmath: include math, rendered as PNG images (y/N) [n]:
-> mathjax: include math, rendered in the browser by MathJax (y/N) [n]:
-> ifconfig: conditional inclusion of content based on config values (y/N) [n]:
-> viewcode: include links to the source code of documented Python objects (y/N) [n]:
+> pngmath: include math, rendered as PNG images (y/N) [n]: y
+> mathjax: include math, rendered in the browser by MathJax (y/N) [n]: n
+> ifconfig: conditional inclusion of content based on config values (y/N) [n]: n
+> viewcode: include links to the source code of documented Python objects (y/N) [n]: y
 
 A Makefile and a Windows command file can be generated for you so that you
 only have to run e.g. `make html' instead of invoking sphinx-build
