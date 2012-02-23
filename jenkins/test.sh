@@ -16,8 +16,10 @@ if [ ${VIRTNEW} -eq 1 ] && [ -d ${VIRTENV} ]; then
     rm -rf ${VIRTENV}
 fi
 
-# Create virtualenv
-virtualenv --python=python${VIRTVER} --no-site-packages --distribute ${VIRTENV}
+# Create virtualenv, but only if doesn't exist
+if [ ! -f ${VIRTENV}/bin/python${VIRTVER} ]; then
+    virtualenv --python=python${VIRTVER} --no-site-packages --distribute ${VIRTENV}
+fi
 
 # Enter the virtualenv
 . ${VIRTENV}/bin/activate
@@ -28,10 +30,7 @@ export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
 pip install --upgrade pip
 
 # Install testing and code metric tools
-pip install --upgrade clonedigger nosexcover pep8 pyflakes sphinx
-if [ ${PYLINT} -eq 1 ]; then
-  pip install --upgrade pylint
-fi
+pip install --upgrade clonedigger pep8 pyflakes pylint sphinx
 
 # Install requirements
 #if [ -f requirements.txt ]; then
