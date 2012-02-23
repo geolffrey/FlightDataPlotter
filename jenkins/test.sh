@@ -30,13 +30,18 @@ export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
 pip install --upgrade pip
 
 # Install testing and code metric tools
-pip install --upgrade clonedigger pep8 pyflakes pylint sphinx
+#pip install --upgrade clonedigger pep8 pyflakes pylint sphinx
 
 # Install requirements
 #if [ -f requirements.txt ]; then
 #    pip install --upgrade -r requirements.txt
 #fi
-pip install --upgrade ${WORKSPACE}/
+
+pip uninstall `basename ${WORKSPACE}`
+pip install "file:///`pwd`#egg=`basename ${WORKSPACE}`[coverage,doc,quality]"
+
+#pip install --upgrade "file:///`pwd`#egg=Skeleton[doc]"
+
 
 # Run any additional setup steps
 if [ -x jenkins/setup-extra.sh ]; then
@@ -53,7 +58,7 @@ rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log
 
 # Run the tests and coverage
 if [ -f setup.py ]; then
-    python setup.py test
+    python setup.py coverage
 fi
 
 # Pyflakes code quality metric, in Pylint format

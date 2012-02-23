@@ -91,7 +91,7 @@ setup(
     # to remember to modify your setup script whenever your project grows 
     # additional top-level packages or subpackages.
 
-    packages = find_packages(exclude=['distribute_setup']),
+    packages = find_packages(exclude=['tests']),
                 
     # You can specify data files to be included in your packages. Use 
     # the include_package_data keyword. This tells setuptools to install any 
@@ -106,10 +106,13 @@ setup(
     # Parse the 'requirements.txt' file to determine the dependencies.
     install_requires = parse_requirements('requirements.txt'), 
     dependency_links = parse_dependency_links('requirements.txt'),
-    setup_requires = ['nose>=1.0', 'nosexcover'],
+    setup_requires = ['nose'],
     tests_require = ['mock'],
     extras_require = {
-        'test': ['mock'],
+        'coverage': ['nosexcover'],
+        'doc': ['sphinx', 'sphinx-pypi-upload'],    
+        'quality': ['clonedigger', 'pep8', 'pyflakes', 'pylint'],
+        'test': ['mock'],        
     },
     test_suite = 'nose.collector',
 
