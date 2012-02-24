@@ -1,20 +1,57 @@
 #!/usr/bin/env bash
 
-PACKAGE="skeleton"
-VIRTVER="2.7"
+function usage() {
+    local MODE=${1}
+    echo "Usage"
+    echo
+    echo "  ${0} -p package_name -v python_version -l"
+    echo
+    echo "Required parameters"
+    echo "  -p package_name   : The package to test."
+    echo "  -v python version : The virtualenv Python version to use."
+    echo "Optional parameters"
+    echo "  -l                : Enable 'pylint'. By default only 'pyflakes' is used."
+    echo "  -h                : This help"
+    exit 1
+}
 
-# 0 = Keep existing virtualenv. 1 = Create a new virtualenv.
-VIRTNEW=0
-
-# 0 = Run Pyflakes. 1 = Run Pyflakes & Pyint
-PYLINT=0
-
-VIRTENV=${WORKSPACE}/.pyenv
-
-# Delete previously built virtualenv
-if [ ${VIRTNEW} -eq 1 ] && [ -d ${VIRTENV} ]; then
-    rm -rf ${VIRTENV}
+# Make sure we are running from within Jenkins
+if [ -z "${WORKSPACE}" ]; then
+    echo "ERROR! This script is designed to run from within a Jenkins build."
+    exit1
 fi
+
+# Init the variables
+VIRTVER=""
+PACKAGE=""
+PYLINT=0    # 0 = Run Pyflakes. 1 = Run Pyflakes & Pyint
+
+# Parse the options
+OPTSTRING=hlp:v:
+while getopts ${OPTSTRING} OPT
+do
+    case ${OPT} in
+        h) usage;;
+        l) PYLINT=1;;
+        p) PACKAGE=${OPTARG};;
+        v) VIRTVER=${OPTARG};;
+        *) usage;;
+    esac
+done
+shift "$(( $OPTIND - 1 ))"
+
+# Check that the package dir exists.
+if [ ! -d ${WORKSPACE}/${PACKAGE} ]; then
+    echo "ERROR! Can't find directory ${WORKSPACE}/${PACKAGE}"
+    exit 1
+fi
+
+# Remove old style virtualenv
+if [ -d ${WORKSPACE}/.pyenv ]; then
+    rm -rf ${WORKSPACE}/.pyenv
+fi
+
+VIRTENV=${WORKSPACE}/.py${VIRTVER}
 
 # Create virtualenv, but only if doesn't exist
 if [ ! -f ${VIRTENV}/bin/python${VIRTVER} ]; then
@@ -23,6 +60,8 @@ fi
 
 # Enter the virtualenv
 . ${VIRTENV}/bin/activate
+
+# Enter the Jenkins workspace
 cd ${WORKSPACE}
 
 # Update pip to the latest version and use the interna PyPI server
@@ -33,8 +72,8 @@ pip install --upgrade pip
 pip install --upgrade file:///${WORKSPACE}#egg=${PACKAGE}[coverage,doc,quality]
 
 # Run any additional setup steps
-if [ -x jenkins/setup-extra.sh ]; then
-    jenkins/setup-extra.sh
+if [ -x ${WORKSPACE}/jenkins/setup-extra.sh ]; then
+    ${WORKSPACE}/jenkins/setup-extra.sh
 fi
 
 # Install runtime requirements.
@@ -47,7 +86,7 @@ rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log
 
 # Run the tests and coverage
 if [ -f setup.py ]; then
-    python setup.py coverage
+    python setup.py jenkins
 fi
 
 # Pyflakes code quality metric, in Pylint format

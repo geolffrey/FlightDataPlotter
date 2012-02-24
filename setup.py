@@ -109,9 +109,8 @@ setup(
     setup_requires = ['nose'],
     tests_require = ['mock'],
     extras_require = {
-        'coverage': ['nosexcover'],
-        'doc': ['sphinx', 'sphinx-pypi-upload'],    
-        'quality': ['clonedigger', 'pep8', 'pyflakes', 'pylint'],
+        'jenkins': ['clonedigger', 'nosexcover', 'pep8', 'pyflakes', 'pylint'],
+        'sphinx': ['sphinx', 'sphinx-pypi-upload'],
         'test': ['mock'],        
     },
     test_suite = 'nose.collector',
