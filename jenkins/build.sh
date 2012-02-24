@@ -83,6 +83,6 @@ if [ -f setup.py ] && [ -f setup.cfg ]; then
 
     # Build sphinx documentation
     if [ -f ${WORKSPACE}/doc/Makefile ]; then
-        python setup.py build_sphinx
+        python setup.py build_sphinx -w ${WORKSPACE}/sphinx.log
     fi
 fi
