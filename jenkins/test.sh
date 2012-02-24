@@ -69,7 +69,7 @@ export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
 pip install --upgrade pip
 
 # Install the package and the Jenkins requirements
-pip install --upgrade file:///${WORKSPACE}#egg=${PACKAGE}[jenkins,sphinx]
+eval pip install --upgrade file:///${WORKSPACE}#egg=${PACKAGE}[jenkins,sphinx]
 
 # Run any additional setup steps
 if [ -x ${WORKSPACE}/jenkins/setup-extra.sh ]; then
