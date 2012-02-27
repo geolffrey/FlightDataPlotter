@@ -15,68 +15,31 @@ requirements.txt    - pip requirements file. Must include runtime and test suite
 MANIFEST.in         - Controls what files are put into the distribution source
                       file when you call 'python setup.py sdist'.
 
-Your packages should be organised like this.
-
-.
-├── CHANGES
-├── distribute_setup.py
-├── docs
-├── LICENSE
-├── README
-├── requirements.txt
-├── setup.bmp
-├── setup.cfg
-├── setup.py
-└── skeleton
-    ├── cross_bones_too.py
-    ├── data
-    │   ├── chrous_1.dat
-    │   ├── chrous_2.dat
-    │   ├── song.dat
-    │   ├── verse_1.dat
-    │   └── verse_2.dat
-    ├── __init__.py
-    ├── scripts
-    │   ├── cross_bones
-    │   └── skull
-    ├── skull_too.py
-    └── tests
-        ├── __init__.py
-        └── testSkeleton.py
-
-
 Ignore the cruft
 
 By the way, now’s a good time to create an 'ignore' file for your revision
 control system — you are using revision control, right? Since a bunch of this
 stuff gets generated, we don’t want to check it into revision control.
 
-Here's what I recommend as a starting point.
-
- *.pyc
- *.pyo
- *.egg-info
- *~
- dist
- build
- .coverage
+See .bzrignore in this package for a auitable template.
 
 References
 
- - http://docs.python.org/distutils/
- - http://pypi.python.org/pypi/setuptools
- - http://peak.telecommunity.com/DevCenter/setuptools
- - http://github.com/ella/setuptools-dummy
- - http://somethingaboutorange.com/mrl/projects/nose/0.11.1/api/commands.html
- - http://pypi.python.org/pypi/pip/
- - http://cburgmer.posterous.com/pip-requirementstxt-and-setuppy
- - http://pypi.python.org/pypi/distribute
+ * http://packages.python.org/distribute/setuptools.html
+ * http://docs.python.org/distutils/
+ * http://pypi.python.org/pypi/setuptools
+ * http://peak.telecommunity.com/DevCenter/setuptools
+ * http://github.com/ella/setuptools-dummy
+ * http://somethingaboutorange.com/mrl/projects/nose/0.11.1/api/commands.html
+ * http://pypi.python.org/pypi/pip/
+ * http://cburgmer.posterous.com/pip-requirementstxt-and-setuppy
+ * http://pypi.python.org/pypi/distribute
 
 These are good introductions to setuptools.
 
- - http://ianbicking.org/docs/setuptools-presentation/
- - http://parijatmishra.wordpress.com/2008/10/08/python-packaging-setuptools-and-eggs/
- - http://www.timecastle.net/static/2-python-setuptools.pdf
+ * http://ianbicking.org/docs/setuptools-presentation/
+ * http://parijatmishra.wordpress.com/2008/10/08/python-packaging-setuptools-and-eggs/
+ * http://www.timecastle.net/static/2-python-setuptools.pdf
 
 A release process example
 
