@@ -64,20 +64,23 @@ fi
 # Enter the Jenkins workspace
 cd ${WORKSPACE}
 
-# Update pip to the latest version and use the interna PyPI server
+# Use the interna PyPI server
 export PIP_INDEX_URL=http://pypi.flightdataservices.com/simple/
+
+# Update easy_install/distutil PyPI server
+echo "[easy_install]"                                          >  ~/.pydistutils.cfg
+echo "index_url = http://pypi.flightdataservices.com/simple/"  >> ~/.pydistutils.cfg
+
+# Update pip to the latest version
 pip install --upgrade pip
 
-# Install Jenkins requirements
-if [ -f requirements-jenkins.txt ]; then
-    pip install --upgrade -r requirements-jenkins.txt
-fi
-
-# Install Sphinx requirements
-if [ -f requirements-sphinx.txt ]; then
-    pip install --upgrade -r requirements-sphinx.txt
-fi
-
+# Install Jenkins, Sphinx and Setup requirements
+for REQUIREMENTS in requirements-jenkins.txt requirements-sphinx.txt requirements-setup.txt
+do
+    if [ -f ${REQUIREMENTS} ]; then
+        pip install --upgrade -r ${REQUIREMENTS}
+    fi
+done
 #eval pip install --upgrade file:///.#egg=${PACKAGE}[jenkins,sphinx]
 
 # Run any additional setup steps
@@ -91,7 +94,7 @@ if [ -f setup.py ]; then
 fi
 
 # Remove existing output files
-rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log
+rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log 2>/dev/null
 
 # Run the tests and coverage
 if [ -f setup.py ]; then
@@ -109,7 +112,7 @@ if [ ${PYLINT} -eq 1 ]; then
 fi
 
 # PEP8 code quality metric
-pep8 ${PACKAGE} > pep8.log || :
+pep8 ${PACKAGE} > pep8.log
 
 # Copy and Paste Detector code quality metric
 clonedigger --fast --cpd-output --output=cpd.xml ${PACKAGE}

@@ -26,8 +26,7 @@ setup(
     license='Other/Proprietary License',
     url='http://www.flightdatacommunity.com/',
     download_url='',    
-    packages=find_packages(exclude=['distribute_setup', 'requirements', \
-    'tests']),
+    packages=find_packages(exclude=("tests",)),
     # The 'include_package_data' keyword tells setuptools to install any 
     # data files it finds specified in the MANIFEST.in file.    
     include_package_data=True,
