@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-
 def skull():
     print('Skull')
 
-
-def run():
+def main():
     skull()
 
-
 if __name__ == '__main__':
-    run()
+    main()

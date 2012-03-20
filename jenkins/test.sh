@@ -103,8 +103,8 @@ fi
 # Remove existing output files
 rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log 2>/dev/null
 
-# Run the tests and coverage
-if [ -f setup.py ]; then
+# Run the tests suite and generate coverage reports
+if [ -f setup.py ] && [ -d tests ]; then
     python setup.py jenkins
 fi
 
