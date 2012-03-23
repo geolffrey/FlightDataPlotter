@@ -24,7 +24,8 @@ setup(
     maintainer_email=pkg.__maintainer_email__,
     url=pkg.__url__,
     description=pkg.__description__,
-    long_description=open('README').read() + open('CHANGES').read(),
+    long_description=open('README.rst').read() + open('CHANGES').read() +
+    open('TODO').read() + open('AUTHORS').read(),
     download_url=pkg.__download_url__,
     classifiers=pkg.__classifiers__,
     platforms=pkg.__platforms__,
@@ -39,14 +40,13 @@ setup(
     extras_require=requirements.extras_require,
     dependency_links=requirements.dependency_links,
     test_suite='nose.collector',
-    entry_points = """
-        [console_scripts]
-        cross_bones = skeleton.scripts.cross_bones:main
-        skull = skeleton.scripts.skull:main
-        
-        #[gui_scripts]
-        #skull_gui = skeleton.gui.skull_gui:main
-        """,                       
+    entry_points={
+        'console_scripts': [
+            'cross_bones=skeleton.scripts.cross_bones:main',
+            'skull=skeleton.scripts.skull:main',
+        ],
+        'gui_scripts' : [],
+    },
 )
 
 ################################################################################
