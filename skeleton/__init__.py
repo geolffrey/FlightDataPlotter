@@ -11,7 +11,7 @@ __author_email__ = 'developers@flightdataservices.com'
 __maintainer__ = 'Flight Data Services Ltd'
 __maintainer_email__ = 'developers@flightdataservices.com'
 __url__= 'http://www.flightdataservices.com/'
-__description__ ='A Skeleton Python Package'
+__description__ = 'A Skeleton Python Package'
 __download_url__= ''
 __classifiers__ = [
     'Development Status :: 5 - Production/Stable',
@@ -23,9 +23,9 @@ __classifiers__ = [
     'Operating System :: OS Independent',
     'Topic :: Software Development',
     ]
-__platforms__= ['OS Independent']
+__platforms__ = ['OS Independent']
 __license__ = 'Other/Proprietary License'
-__keywords__= ['skeleton', 'template', 'package']
+__keywords__ = ['skeleton', 'template', 'package']
 
 ################################################################################
 # vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
