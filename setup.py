@@ -11,7 +11,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-import skeleton as pkg
+import flightdataplotter as pkg
 from requirements import RequirementsParser
 requirements = RequirementsParser()
 
@@ -42,8 +42,7 @@ setup(
     test_suite='nose.collector',
     entry_points={
         'console_scripts': [
-            'cross_bones=skeleton.scripts.cross_bones:main',
-            'skull=skeleton.scripts.skull:main',
+            'plot_params=flightdataplotter:main',
         ],
         'gui_scripts' : [],
     },
