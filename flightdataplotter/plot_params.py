@@ -4,6 +4,8 @@ import argparse
 import configobj
 import itertools
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+from pylab import setp
 import os
 import sys
 import tempfile
@@ -109,16 +111,56 @@ def plot_parameters(hdf_path, axes):
                                                   array_len)
             param.array = param.array[:array_len]
     
-    fig = plt.figure()
-    plt.title("Processed %s" % str(datetime.now()))    
+    #===========================================================================
+    # Plot Preparation
+    #===========================================================================
     
+    # Invariant parameters are identified here. They could be inserted into
+    # the plot configuration file, but this is more straightforward.
+    plt.rc('axes', grid=True)
+    plt.rc('grid', color='0.75', linestyle='-', linewidth=0.5)
+
+    # These items are altered during the plot, so not suited to plt.rc setup
+    axescolor  = 'white' # Was '#fafafa'
+    axprops = dict(axisbg=axescolor)
+    prop = fm.FontProperties(size=10)
+    legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
+    lineprops = dict(linewidth=0.5, color='black')
+
+
+    # Start by making a big clean canvas
+    fig = plt.figure(facecolor='white', figsize=(20,10))
+    
+    # Add the "reference" altitude plot, and title this
+    # (If we title the empty plot, it acquires default 0-1 scales)
+    param_name = axes[1][0]
+    param = params[param_name]
+    array = align(param, param_max_freq)
+    first_axis = fig.add_subplot(len(axes), 1, 1)
+    first_axis.plot(array, label=param_name)
+    plt.title("Processed on %s" % 
+              datetime.strftime(datetime.now(),'%A, %d %B %Y at %X'))    
+    setp(first_axis.get_xticklabels(), visible=False)
+    
+    # Now plot the additional data from the AXIS_N lists at the top of the lfl
     for index, param_names in axes.iteritems():
-        axis = fig.add_subplot(len(axes), 1, index)
+        if index == 1:
+            continue
+        axis = fig.add_subplot(len(axes), 1, index, sharex=first_axis)
         for param_name in param_names:
             param = params[param_name]
-            array = align(param, param_max_freq)
-            axis.plot(array, label=param_name)
-        plt.legend(prop={'size':8})
+            # Data is aligned in time but the samples are not interpolated so 
+            # that scaling issues can be easily addressed
+            array = align(param, param_max_freq, data_type='non-aligned')
+            if param.units == None:
+                label_text = param_name + " [No units]"
+            else:
+                label_text = param_name + " : " + param.units
+            axis.plot(array, label=label_text)
+            axis.legend(loc='upper right', **legendprops)
+            if index<len(axes):
+                setp(axis.get_xticklabels(), visible=False)
+        plt.legend(prop={'size':10})
         
     plt.show()
 
@@ -167,10 +209,12 @@ class ProcessAndPlotLoops(threading.Thread):
         
         # Create a list of all parameters within the groups.
         param_names = set(itertools.chain.from_iterable(axes.values()))
+        print param_names
         try:
             lfl_parser, param_list = parse_lfl(lfl_path,
                                                param_names=param_names,
-                                               frame_doubled=frame_doubled)
+                                               frame_doubled=frame_doubled,
+                                               verbose=True)
         except RuntimeError as err:
             show_error_dialog('Error while parsing LFL!', str(err))
             raise ValueError
@@ -217,6 +261,7 @@ class ProcessAndPlotLoops(threading.Thread):
         The plotting loop.
         '''
         while True:
+            print 'plot loop'
             if self.exit_loop.is_set():
                 return
             elif self._ready_to_plot.is_set():
@@ -280,6 +325,7 @@ def main():
     process_thread = ProcessAndPlotLoops(hdf_path)
     plot_func = lambda: process_thread.process_data(*plot_args)
     process_thread.start()
+    print hdf_path
     try:
         process_thread.process_loop(lfl_path, plot_func)
     except KeyboardInterrupt:
