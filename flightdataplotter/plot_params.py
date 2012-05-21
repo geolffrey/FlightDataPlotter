@@ -1,4 +1,14 @@
-"""Plot parameters."""
+'''
+This application plots LFL parameters and is intended to provide quick feedback
+to people altering LFL definitions.
+
+Tkinter seems to have issues displaying windows from separate threads and
+also behaves differently on Windows and Linux. Potential fixes:
+* Ensure all windows are created by the main thread. Signals will have to
+  be passed between threads for messages which provide feedback on processing.
+* Use a separate process instead of thread for processing.
+Testing will need to occur on Windows.
+'''
 
 import argparse
 import configobj
@@ -187,7 +197,7 @@ class ProcessAndPlotLoops(threading.Thread):
         # Load config to read AXIS groups.
         try:
             config = configobj.ConfigObj(lfl_path)
-        except configobj.ParseError as err:
+        except configobj.ConfigObjError as err:
             show_error_dialog('Error while parsing LFL!', str(err))
             raise ValueError
         axes = {1: ['Altitude STD']}
