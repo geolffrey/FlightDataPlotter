@@ -56,7 +56,11 @@ def create_parser(paths):
                         action='store', type=int, default=-1, help=help_message)
     parser.add_argument('-f', '--frame-doubled', dest='frame_doubled',
                         default=False, action='store_true',
-                        help="The input raw data is frame doubled.")    
+                        help="The input raw data is frame doubled.")
+    help_message = "Plot parameters which have changed since the last processing."
+    parser.add_argument('--plot-changed', dest='plot_changed',
+                        default=False, action='store_true',
+                        help=help_message)
     return parser
     
     
@@ -86,6 +90,7 @@ def validate_args(lfl_path, data_path, args):
         output_path,
         args.superframes_in_memory,
         args.frame_doubled,
+        args.plot_changed,
     )
 
 
@@ -113,7 +118,8 @@ def plot_parameters(hdf_path, axes):
         if param.frequency == min_freq:
             param_min_freq_len = len(param.array)
     
-    # Truncate parameter arrays to successfully align them.
+    # Truncate parameter arrays to successfully align them since the file
+    # has not been through split sections.
     for param_name, param in params.iteritems():
         array_len = param_min_freq_len * (param.frequency / min_freq)
         if array_len != len(param.array):
@@ -182,65 +188,119 @@ class ProcessError(Exception):
     pass
 
 class ProcessAndPlotLoops(threading.Thread):
-    def __init__(self, hdf_path):
+    def __init__(self, hdf_path, plot_changed):
+        '''
+        :param hdf_path: Output path for HDF file.
+        :type hdf_path: str
+        '''
         self._hdf_path = hdf_path
+        
+        self._changed_params = set()
+        self._plot_changed = plot_changed
+        
+        self.__error_lock = threading.Lock()
+        self.__error_messages = []
         
         self.exit_loop = threading.Event()
         self._ready_to_plot = threading.Event()
         
         self._axes = None
         
+        self._last_config = None
+        
         super(ProcessAndPlotLoops, self).__init__()
+    
+    def _queue_error_message(self, title, message):
+        self.__error_lock.acquire()
+        self.__error_messages.append((title, message))
+        self.__error_lock.release()
+    
+    def _get_error_message(self):
+        self.__error_lock.acquire()
+        if self.__error_messages:
+            message = self.__error_messages.pop()
+        else:
+            message = None
+        self.__error_lock.release()
+        return message
         
     def process_data(self, lfl_path, data_path, output_path,
-                     superframes_in_memory, frame_doubled):
+                     superframes_in_memory, frame_doubled, plot_changed):
+        '''
+        :param lfl_path: Path of LFL file.
+        :type lfl_path: str
+        :param output_path: Output path of HDF file.
+        :type output_path: str
+        :param superframes_in_memory: Number of superframes to process in memory.
+        :type superframes_in_memory: int
+        :param frame_doubled: Whether or not the raw data file is frame doubled.
+        :type frame_doubled: bool
+        :param plot_changed: Whether or not to plot parameters which change within the LFL.
+        :type plot_changed: bool        
+        '''
         # Load config to read AXIS groups.
         try:
             config = configobj.ConfigObj(lfl_path)
         except configobj.ConfigObjError as err:
-            show_error_dialog('Error while parsing LFL!', str(err))
-            raise ValueError
+            self._queue_error_message('Error while parsing LFL!', str(err))
+            raise ValueError(str(err))
+        
+        if self._last_config:
+            for param_name, param_conf in config['Parameters'].iteritems():
+                # TODO: Param added, not only changed.
+                if param_conf != self._last_config['Parameters'][param_name]:
+                    self._changed_params.add(param_name)
+        
+        self._last_config = dict(config)
+        
         axes = {1: ['Altitude STD']}
-        axis_index = 1
+        if plot_changed and self._changed_params:
+            # Add an axis for parameters which have changed.
+            axes[2] = list(self._changed_params)
+            
+        # Read AXIS_* parameter groups.
+        axis_offset = len(axes)
+        group_index = 1
         while True:
-            axis_name = 'AXIS_%d' % axis_index
+            group_name = 'AXIS_%d' % group_index
             try:
-                axes[axis_index + 1] = config['Parameter Group'][axis_name]
+                axes[group_index + axis_offset] = config['Parameter Group'][group_name]
             except KeyError:
                 break
-            axis_index += 1
+            group_index += 1
         
         if len(axes) == 1:
-            show_error_dialog('AXIS_1 parameter group is not defined!',
-                              'Please define a parameter group within the LFL '
-                              'named AXIS_1. Subsequent axes can be defined with '
-                              'groups named AXIS_2, AXIS_3, etc.')
-            raise ValueError
+            message = 'AXIS_1 parameter group is not defined! Please define ' \
+                      'a parameter group within the LFL named AXIS_1. ' \
+                      'Subsequent axes can be defined with groups named ' \
+                      'AXIS_2, AXIS_3, etc.'
+            self._queue_error_message('AXIS_1 group missing', message)
+            raise ValueError(message)
         
         # Create a list of all parameters within the groups.
         param_names = set(itertools.chain.from_iterable(axes.values()))
-        print param_names
+        
         try:
             lfl_parser, param_list = parse_lfl(lfl_path,
                                                param_names=param_names,
                                                frame_doubled=frame_doubled,
                                                verbose=True)
-        except RuntimeError as err:
+        except Exception as err:
             show_error_dialog('Error while parsing LFL!', str(err))
-            raise ValueError
+            raise ValueError(str(err))
         print 'Processing HDF file.'
         try:
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
         except Exception as err:
-            show_error_dialog('Processing failed!',
-                              'Error occurred during processing. '
-                              'Please ensure both LFL and '
-                              'raw data file are correct. Exception: %s' % err)
-            raise ProcessError
+            message = 'Error occurred during processing. Please ensure both ' \
+                      'the LFL and raw data file are correct. Exception: %s' \
+                      % err
+            self._queue_error_message('Processing failed!', message)
+            raise ValueError(message)
             
         print 'Finished processing.'
-        return axes    
+        return axes
     
     def process_loop(self, lfl_path, function):
         '''
@@ -248,13 +308,14 @@ class ProcessAndPlotLoops(threading.Thread):
         '''
         prev_mtime = None
         while True:
+            #print 'process loop'
             mtime = os.path.getmtime(lfl_path)
             if not prev_mtime or mtime > prev_mtime:
                 if self._ready_to_plot.is_set():
                     self._ready_to_plot.clear()
                 try:
                     self._axes = function()
-                except ValueError:
+                except ValueError as e:
                     continue
                 except ProcessError:
                     self.exit_loop.set()
@@ -271,10 +332,17 @@ class ProcessAndPlotLoops(threading.Thread):
         The plotting loop.
         '''
         while True:
-            print 'plot loop'
+            # For some strange reason it appears that printing the following
+            # line affects the plotting window being shown on windows.
+            #print 'plot loop'
             if self.exit_loop.is_set():
                 return
-            elif self._ready_to_plot.is_set():
+            error_message = self._get_error_message()
+            if error_message:
+                print 'Displaying error message.'
+                show_error_dialog(*error_message)
+                continue
+            if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
                 plot_parameters(self._hdf_path, self._axes)
             else:
@@ -293,6 +361,7 @@ def show_error_dialog(title, message):
     # If we don't explicitly destroy the window, subsequent matplotlib windows
     # will hang.
     window.destroy()
+
 
 def file_dialogs():
     window = Tkinter.Tk()
@@ -332,10 +401,9 @@ def main():
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
     finished_event = threading.Event()
-    process_thread = ProcessAndPlotLoops(hdf_path)
+    process_thread = ProcessAndPlotLoops(hdf_path, args.plot_changed)
     plot_func = lambda: process_thread.process_data(*plot_args)
     process_thread.start()
-    print hdf_path
     try:
         process_thread.process_loop(lfl_path, plot_func)
     except KeyboardInterrupt:
@@ -344,10 +412,11 @@ def main():
     finally:
         # If the file is in a temporary location, remove it.
         if not args.output_path:
-            try:
-                os.remove(hdf_path)
-            except (OSError, IOError):
-                print 'Could not remove file.'    
+            if os.path.exists(hdf_path):
+                try:
+                    os.remove(hdf_path)
+                except (OSError, IOError):
+                    print 'Could not remove HDF file.'    
 
 
 if __name__ == '__main__':
