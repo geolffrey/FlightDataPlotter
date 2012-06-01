@@ -15,7 +15,7 @@ import configobj
 import itertools
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-from pylab import setp
+
 import os
 import sys
 import tempfile
@@ -25,11 +25,12 @@ import tkMessageBox
 import Tkinter
 
 from datetime import datetime
+from pylab import setp
 from tkFileDialog import askopenfilename
 
 from analysis_engine.library import align
 
-from compass.compass_cli import parse_lfl
+from compass.compass_cli import configobj_error_message, parse_lfl
 from compass.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
@@ -137,15 +138,13 @@ def plot_parameters(hdf_path, axes):
     plt.rc('grid', color='0.75', linestyle='-', linewidth=0.5)
 
     # These items are altered during the plot, so not suited to plt.rc setup
-    axescolor  = 'white' # Was '#fafafa'
-    axprops = dict(axisbg=axescolor)
     prop = fm.FontProperties(size=10)
     legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
-    lineprops = dict(linewidth=0.5, color='black')
-
 
     # Start by making a big clean canvas
     fig = plt.figure(facecolor='white', figsize=(20,10))
+    fig.canvas.set_window_title("Processed on %s" %
+                                datetime.now().strftime('%A, %d %B %Y at %X'))
     
     # Add the "reference" altitude plot, and title this
     # (If we title the empty plot, it acquires default 0-1 scales)
@@ -154,8 +153,8 @@ def plot_parameters(hdf_path, axes):
     array = align(param, param_max_freq)
     first_axis = fig.add_subplot(len(axes), 1, 1)
     first_axis.plot(array, label=param_name)
-    plt.title("Processed on %s" % 
-              datetime.strftime(datetime.now(),'%A, %d %B %Y at %X'))    
+    
+    #plt.title("Processed on %s" % datetime.now().strftime('%A, %d %B %Y at %X'))
     setp(first_axis.get_xticklabels(), visible=False)
     
     # Now plot the additional data from the AXIS_N lists at the top of the lfl
@@ -242,8 +241,9 @@ class ProcessAndPlotLoops(threading.Thread):
         try:
             config = configobj.ConfigObj(lfl_path)
         except configobj.ConfigObjError as err:
-            self._queue_error_message('Error while parsing LFL!', str(err))
-            raise ValueError(str(err))
+            message = configobj_error_message(err)
+            self._queue_error_message('Error while parsing LFL!', message)
+            raise ValueError(message)
         
         if self._last_config:
             for param_name, param_conf in config['Parameters'].iteritems():
@@ -283,11 +283,16 @@ class ProcessAndPlotLoops(threading.Thread):
         try:
             lfl_parser, param_list = parse_lfl(lfl_path,
                                                param_names=param_names,
-                                               frame_doubled=frame_doubled,
-                                               verbose=True)
-        except Exception as err:
-            show_error_dialog('Error while parsing LFL!', str(err))
-            raise ValueError(str(err))
+                                               frame_doubled=frame_doubled)
+        except configobj.ConfigObjError as err:
+            message = configobj_error_message(err)
+            self._queue_error_message('Error while parsing LFL!', message)
+            raise ValueError(message)
+        
+        param_errors = lfl_parser.format_errors()
+        if param_errors:
+            self._queue_error_message('Parameter Errors', param_errors)
+        
         print 'Processing HDF file.'
         try:
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
@@ -308,14 +313,13 @@ class ProcessAndPlotLoops(threading.Thread):
         '''
         prev_mtime = None
         while True:
-            #print 'process loop'
             mtime = os.path.getmtime(lfl_path)
             if not prev_mtime or mtime > prev_mtime:
                 if self._ready_to_plot.is_set():
                     self._ready_to_plot.clear()
                 try:
                     self._axes = function()
-                except ValueError as e:
+                except ValueError:
                     continue
                 except ProcessError:
                     self.exit_loop.set()
@@ -334,7 +338,6 @@ class ProcessAndPlotLoops(threading.Thread):
         while True:
             # For some strange reason it appears that printing the following
             # line affects the plotting window being shown on windows.
-            #print 'plot loop'
             if self.exit_loop.is_set():
                 return
             error_message = self._get_error_message()
@@ -400,7 +403,6 @@ def main():
     
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
-    finished_event = threading.Event()
     process_thread = ProcessAndPlotLoops(hdf_path, args.plot_changed)
     plot_func = lambda: process_thread.process_data(*plot_args)
     process_thread.start()
