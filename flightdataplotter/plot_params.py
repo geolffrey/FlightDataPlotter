@@ -29,7 +29,7 @@ from tkFileDialog import askopenfilename
 
 from analysis_engine.library import align
 
-from compass.compass_cli import parse_lfl
+from compass.data_frame_parser import parse_lfl
 from compass.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
@@ -283,8 +283,7 @@ class ProcessAndPlotLoops(threading.Thread):
         try:
             lfl_parser, param_list = parse_lfl(lfl_path,
                                                param_names=param_names,
-                                               frame_doubled=frame_doubled,
-                                               verbose=True)
+                                               frame_doubled=frame_doubled)
         except Exception as err:
             show_error_dialog('Error while parsing LFL!', str(err))
             raise ValueError(str(err))
