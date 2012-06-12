@@ -26,7 +26,7 @@ __classifiers__ = [
 __platforms__ = ['OS Independent']
 __license__ = 'Other/Proprietary License'
 __keywords__ = ['flightdataplotter', 'lfl', 'flightdataconverter', 'flightdata',
-                'package']
+                'logical frame layout', 'package']
 
 ################################################################################
 # vim:et:ft=python:nowrap:sts=4:sw=4:ts=4

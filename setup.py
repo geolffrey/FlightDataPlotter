@@ -42,7 +42,7 @@ setup(
     test_suite='nose.collector',
     entry_points={
         'console_scripts': [
-            'plot_params=flightdataplotter:main',
+            'plot_params=flightdataplotter.plot_params:main',
         ],
         'gui_scripts' : [],
     },
