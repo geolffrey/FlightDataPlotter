@@ -1,4 +1,4 @@
-Skeleton |release|
+FlightDataPlotter |release|
 ==================
 
 Contents:
