@@ -348,7 +348,11 @@ class ProcessAndPlotLoops(threading.Thread):
                 continue
             if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
-                plot_parameters(self._hdf_path, self._axes)
+                try:
+                    plot_parameters(self._hdf_path, self._axes)
+                except Exception as err:
+                    print 'Exception raised! %s: %s' % (err.__class__.__name__,
+                                                        err)
             else:
                 time.sleep(1)
 
