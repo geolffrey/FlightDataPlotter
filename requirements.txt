@@ -2,5 +2,5 @@ numpy
 h5py==2.0.0
 argparse
 matplotlib
-FlightDataConverter
-FlightDataAnalyser
+Compass
+AnalysisEngine
