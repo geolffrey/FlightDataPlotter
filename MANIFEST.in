@@ -15,6 +15,3 @@ exclude jenkins
 exclude .coverage
 exclude coverage.xml
 exclude nosetests.xml
-
-# Project specific
-include skeleton/data/*.dat
