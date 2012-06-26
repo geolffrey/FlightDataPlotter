@@ -13,20 +13,16 @@ Testing will need to occur on Windows.
 import argparse
 import configobj
 import itertools
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
+import matplotlib
 
 import os
 import sys
 import tempfile
 import threading
 import time
-import tkMessageBox
-import Tkinter
+import wx
 
 from datetime import datetime
-from pylab import setp
-from tkFileDialog import askopenfilename
 
 from analysis_engine.library import align
 
@@ -35,6 +31,14 @@ from compass.data_frame_parser import parse_lfl
 from compass.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
+
+
+# Must appear before the following imports.
+matplotlib.use('WXAgg')
+
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+from pylab import setp
 
 
 # Argument parsing.
@@ -188,12 +192,14 @@ class ProcessError(Exception):
     pass
 
 class ProcessAndPlotLoops(threading.Thread):
-    def __init__(self, hdf_path, plot_changed):
+    def __init__(self, hdf_path, plot_changed, lfl_path, function):
         '''
         :param hdf_path: Output path for HDF file.
         :type hdf_path: str
         '''
         self._hdf_path = hdf_path
+        self._lfl_path = lfl_path
+        self._function = function
         
         self._changed_params = set()
         self._plot_changed = plot_changed
@@ -308,18 +314,18 @@ class ProcessAndPlotLoops(threading.Thread):
         print 'Finished processing.'
         return axes
     
-    def process_loop(self, lfl_path, function):
+    def run(self):
         '''
         The processing loop.
         '''
         prev_mtime = None
         while True:
-            mtime = os.path.getmtime(lfl_path)
+            mtime = os.path.getmtime(self._lfl_path)
             if not prev_mtime or mtime > prev_mtime:
                 if self._ready_to_plot.is_set():
                     self._ready_to_plot.clear()
                 try:
-                    self._axes = function()
+                    self._axes = self._function()
                 except ValueError:
                     continue
                 except ProcessError:
@@ -332,7 +338,7 @@ class ProcessAndPlotLoops(threading.Thread):
             else:
                 time.sleep(1)
 
-    def run(self):
+    def plot_loop(self):
         '''
         The plotting loop.
         '''
@@ -343,7 +349,6 @@ class ProcessAndPlotLoops(threading.Thread):
                 return
             error_message = self._get_error_message()
             if error_message:
-                print 'Displaying error message.'
                 show_error_dialog(*error_message)
                 continue
             if self._ready_to_plot.is_set():
@@ -357,36 +362,70 @@ class ProcessAndPlotLoops(threading.Thread):
                 time.sleep(1)
 
 
+class Frame(wx.Frame):
+    def __init__(self, title, message):
+        wx.Frame.__init__(self, None, title=title, size=(350,150))
+        #self.Bind(wx.EVT_CLOSE, self.OnClose)
+        panel = wx.Panel(self)
+        box = wx.BoxSizer(wx.VERTICAL)
+        
+        m_text = wx.StaticText(panel, -1, message, size=(340, 100),
+                               style=wx.TE_MULTILINE)
+        m_text.SetSize(m_text.GetBestSize())
+        button = wx.Button(panel, label='OK')
+        button.Bind(wx.EVT_BUTTON, self.OnClose)
+        box.Add(m_text, 0, wx.ALL, 10)
+        box.Add(button, 0, wx.EXPAND, 10)
+        
+        panel.SetSizer(box)
+        panel.Layout()        
+
+    def OnClose(self, event):
+        self.Destroy()
+
+
 def show_error_dialog(title, message):
     '''
     Show error.
     '''
-    # By default an empty Tk main window appears along with message dialogs,
-    # the following two lines will hide it.
-    window = Tkinter.Tk()
-    window.wm_withdraw()        
-    tkMessageBox.showerror(title=title, message=message)
-    # If we don't explicitly destroy the window, subsequent matplotlib windows
-    # will hang.
-    window.destroy()
+    app = wx.App()
+    x = Frame(title, message)
+    x.Show()
+    app.MainLoop()
+    
+    ##dial = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_ERROR)
+    ##print 'binding'
+    ##dial.Bind(wx.EVT_CLOSE, close_dialog)
+    ##dial.ShowModal()
+    ##print 'shown'
+    #dial.Close(force=True)
+    ## By default an empty Tk main window appears along with message dialogs,
+    ## the following two lines will hide it.
+    #window = Tkinter.Tk()
+    #window.wm_withdraw()        
+    #tkMessageBox.showerror(title=title, message=message)
+    ## If we don't explicitly destroy the window, subsequent matplotlib windows
+    ## will hang.
+    #window.destroy()
 
 
 def file_dialogs():
-    window = Tkinter.Tk()
-    window.wm_withdraw()
-    lfl_path = askopenfilename(title='Please choose an LFL file.',
-                               filetypes=[("LFL Files","*.lfl")])
-    if not lfl_path:
+    lfl_dialog = wx.FileDialog(None, message="Please choose an LFL file",
+                               wildcard="*.lfl")
+    if lfl_dialog.ShowModal() == wx.ID_OK:
+        lfl_path = os.path.join(lfl_dialog.GetDirectory(),
+                                lfl_dialog.GetFilename())
+    else:
         show_error_dialog('Error!', 'An LFL file must be selected.')
         sys.exit(1)
-    data_path = askopenfilename(title='Please choose a raw data file to process.',
-                                filetypes=[("All Files","*"),
-                                           ("DAT Files","*.dat"),
-                                           ("COP Files","*.COP")])
-    if not data_path:
+    data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
+                               wildcard="*.*")
+    if data_dialog.ShowModal() == wx.ID_OK:
+        data_path = os.path.join(data_dialog.GetDirectory(),
+                                 data_dialog.GetFilename())
+    else:
         show_error_dialog('Error!', 'A raw data file must be selected.')    
-        sys.exit(1)
-    window.destroy()
+        sys.exit(1)        
     return lfl_path, data_path
 
 
@@ -408,11 +447,12 @@ def main():
     
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
-    process_thread = ProcessAndPlotLoops(hdf_path, args.plot_changed)
     plot_func = lambda: process_thread.process_data(*plot_args)
+    process_thread = ProcessAndPlotLoops(hdf_path, args.plot_changed,
+                                         lfl_path, plot_func)
     process_thread.start()
     try:
-        process_thread.process_loop(lfl_path, plot_func)
+        process_thread.plot_loop()
     except KeyboardInterrupt:
         print 'Setting exit_loop event.'
         process_thread.exit_loop.set()
