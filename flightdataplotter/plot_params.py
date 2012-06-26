@@ -1,13 +1,6 @@
 '''
 This application plots LFL parameters and is intended to provide quick feedback
 to people altering LFL definitions.
-
-Tkinter seems to have issues displaying windows from separate threads and
-also behaves differently on Windows and Linux. Potential fixes:
-* Ensure all windows are created by the main thread. Signals will have to
-  be passed between threads for messages which provide feedback on processing.
-* Use a separate process instead of thread for processing.
-Testing will need to occur on Windows.
 '''
 
 import argparse
@@ -392,21 +385,6 @@ def show_error_dialog(title, message):
     x = Frame(title, message)
     x.Show()
     app.MainLoop()
-    
-    ##dial = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_ERROR)
-    ##print 'binding'
-    ##dial.Bind(wx.EVT_CLOSE, close_dialog)
-    ##dial.ShowModal()
-    ##print 'shown'
-    #dial.Close(force=True)
-    ## By default an empty Tk main window appears along with message dialogs,
-    ## the following two lines will hide it.
-    #window = Tkinter.Tk()
-    #window.wm_withdraw()        
-    #tkMessageBox.showerror(title=title, message=message)
-    ## If we don't explicitly destroy the window, subsequent matplotlib windows
-    ## will hang.
-    #window.destroy()
 
 
 def file_dialogs():
