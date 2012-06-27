@@ -34,6 +34,9 @@ import matplotlib.font_manager as fm
 from pylab import setp
 
 
+app = wx.App()
+
+
 # Argument parsing.
 ################################################################################
 
@@ -174,7 +177,6 @@ def plot_parameters(hdf_path, axes):
             if index<len(axes):
                 setp(axis.get_xticklabels(), visible=False)
         plt.legend(prop={'size':10})
-        
     plt.show()
 
 
@@ -294,7 +296,9 @@ class ProcessAndPlotLoops(threading.Thread):
             self._queue_error_message('Parameter Errors', param_errors)
         
         print 'Processing HDF file.'
+        print '==================== DISREGARD HDF LIBRARY OUTPUT ===================='
         try:
+            
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
         except Exception as err:
@@ -303,6 +307,7 @@ class ProcessAndPlotLoops(threading.Thread):
                       % err
             self._queue_error_message('Processing failed!', message)
             raise ValueError(message)
+        print '==================== DISREGARD HDF LIBRARY OUTPUT ===================='
             
         print 'Finished processing.'
         return axes
@@ -356,6 +361,10 @@ class ProcessAndPlotLoops(threading.Thread):
 
 
 class Frame(wx.Frame):
+    '''
+    There a built-in message dialogs which display a message, but they were
+    freezing due to the application's threading model.
+    '''
     def __init__(self, title, message):
         wx.Frame.__init__(self, None, title=title, size=(350,150))
         #self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -381,9 +390,8 @@ def show_error_dialog(title, message):
     '''
     Show error.
     '''
-    app = wx.App()
-    x = Frame(title, message)
-    x.Show()
+    frame = Frame(title, message)
+    frame.Show()
     app.MainLoop()
 
 
