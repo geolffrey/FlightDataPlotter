@@ -34,7 +34,7 @@ import matplotlib.font_manager as fm
 from pylab import setp
 
 
-app = wx.App()
+app = wx.PySimpleApp()
 
 
 # Argument parsing.
@@ -375,6 +375,7 @@ class Frame(wx.Frame):
                                style=wx.TE_MULTILINE)
         m_text.SetSize(m_text.GetBestSize())
         button = wx.Button(panel, label='OK')
+        button.SetDefault()
         button.Bind(wx.EVT_BUTTON, self.OnClose)
         box.Add(m_text, 0, wx.ALL, 10)
         box.Add(button, 0, wx.EXPAND, 10)
