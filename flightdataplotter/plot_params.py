@@ -366,7 +366,7 @@ class Frame(wx.Frame):
     freezing due to the application's threading model.
     '''
     def __init__(self, title, message):
-        wx.Frame.__init__(self, None, title=title, size=(350,150))
+        wx.Frame.__init__(self, None, title=title)
         #self.Bind(wx.EVT_CLOSE, self.OnClose)
         panel = wx.Panel(self)
         box = wx.BoxSizer(wx.VERTICAL)
@@ -377,11 +377,12 @@ class Frame(wx.Frame):
         button = wx.Button(panel, label='OK')
         button.SetDefault()
         button.Bind(wx.EVT_BUTTON, self.OnClose)
-        box.Add(m_text, 0, wx.ALL, 10)
-        box.Add(button, 0, wx.EXPAND, 10)
+        box.Add(m_text, flag=wx.ALL)
+        box.Add(button, flag=wx.EXPAND)
         
-        panel.SetSizer(box)
-        panel.Layout()        
+        panel.SetSizerAndFit(box)
+        self.Layout()
+        self.Fit()
 
     def OnClose(self, event):
         self.Destroy()
