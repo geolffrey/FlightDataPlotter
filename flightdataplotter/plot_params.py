@@ -125,8 +125,8 @@ def plot_parameters(hdf_path, axes):
     for param_name, param in params.iteritems():
         array_len = param_min_freq_len * (param.frequency / min_freq)
         if array_len != len(param.array):
-            print 'Truncated %s from %d to %d' % (param_name, len(param.array),
-                                                  array_len)
+            print 'Truncated %s from %d to %d for display purposes' % (
+                param_name, len(param.array), array_len)
             param.array = param.array[:array_len]
     
     #===========================================================================
@@ -250,7 +250,8 @@ class ProcessAndPlotLoops(threading.Thread):
         if self._last_config:
             for param_name, param_conf in config['Parameters'].iteritems():
                 # TODO: Param added, not only changed.
-                if param_conf != self._last_config['Parameters'][param_name]:
+                if param_name in self._last_config['Parameters'] and \
+                   param_conf != self._last_config['Parameters'][param_name]:
                     self._changed_params.add(param_name)
         
         self._last_config = dict(config)
