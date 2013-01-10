@@ -37,3 +37,6 @@ nosetests.xml
 cpd.xml
 pep8.log
 pylint.log
+
+# Keep empty directories
+!.git*
