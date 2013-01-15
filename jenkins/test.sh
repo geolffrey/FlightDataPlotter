@@ -116,7 +116,7 @@ rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log 2>/dev/n
 #if [ -f setup.py ] && [ -d tests ]; then
 #    python setup.py jenkins
 #fi
-nosetests --with-xunit --all-modules --traverse-namespace --with-coverage --cover-package=${PACAKGE} --cover-inclusive --cover-erase
+nosetests --with-xunit --all-modules --traverse-namespace --with-coverage --cover-package=${PACKAGE} --cover-inclusive --cover-erase
 python -m coverage xml --include=${PACKAGE}*
 
 # Pyflakes code quality metric, in Pylint format
