@@ -419,6 +419,11 @@ def file_dialogs():
 
 
 def main():
+    print ' FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.'
+    print '  - Powered by POLARIS'
+    print '  - http://www.flightdatacommunity.org'
+    print ''
+
     # Check if first argument is an option or a path.
     if len(sys.argv) > 1 and not sys.argv[1].startswith('-') \
        and not '-h' in sys.argv:
