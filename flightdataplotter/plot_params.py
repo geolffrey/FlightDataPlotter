@@ -419,7 +419,7 @@ def file_dialogs():
 
 
 def main():
-    print ' FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.'
+    print 'FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.'
     print '  - Powered by POLARIS'
     print '  - http://www.flightdatacommunity.com'
     print ''
