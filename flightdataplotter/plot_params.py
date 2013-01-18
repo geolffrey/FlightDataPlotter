@@ -167,7 +167,7 @@ def plot_parameters(hdf_path, axes):
             param = params[param_name]
             # Data is aligned in time but the samples are not interpolated so 
             # that scaling issues can be easily addressed
-            array = align(param, param_max_freq, data_type='non-aligned')
+            array = align(param, param_max_freq, interpolate=False)
             if param.units == None:
                 label_text = param_name + " [No units]"
             else:
