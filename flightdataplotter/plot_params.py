@@ -143,7 +143,7 @@ def plot_parameters(hdf_path, axes):
     legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
 
     # Start by making a big clean canvas
-    fig = plt.figure(facecolor='white', figsize=(20,10))
+    fig = plt.figure(facecolor='white', figsize=(8,6))
     fig.canvas.set_window_title("Processed on %s" %
                                 datetime.now().strftime('%A, %d %B %Y at %X'))
     
@@ -167,7 +167,7 @@ def plot_parameters(hdf_path, axes):
             param = params[param_name]
             # Data is aligned in time but the samples are not interpolated so 
             # that scaling issues can be easily addressed
-            array = align(param, param_max_freq, data_type='non-aligned')
+            array = align(param, param_max_freq, interpolate=False)
             if param.units == None:
                 label_text = param_name + " [No units]"
             else:
