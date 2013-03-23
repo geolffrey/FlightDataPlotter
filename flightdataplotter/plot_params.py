@@ -56,7 +56,7 @@ def create_parser(paths):
         "stored in memory. Default is 100 superframes."
     parser.add_argument('--superframes-in-memory', dest='superframes_in_memory',
                         action='store', type=int, default=-1, help=help_message)
-    parser.add_argument('-f', '--frame-doubled', dest='frame_doubled',
+    parser.add_argument('-d', '--frame-doubled', dest='frame_doubled',
                         default=False, action='store_true',
                         help="The input raw data is frame doubled.")
     help_message = "Plot parameters which have changed since the last processing."
