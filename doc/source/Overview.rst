@@ -4,7 +4,7 @@ FlightDataPlotter
 
 The FlightDataPlotter is an application which displays logical frame layout parameters and is designed to provide responsive feedback during LFL development.
 
-.. image: flight_data_plotter_interface.png
+.. image:: flight_data_plotter_interface.png
 
 --------------------
 Logical Frame Layout
@@ -27,9 +27,9 @@ Running the FlightDataPlotter
 
 The application is started by running plot_params.py. If no arguments are provided, you will be asked to select an LFL file followed by a data file.
 
-.. image: select_lfl.png
+.. image:: select_lfl.png
 
-.. image: select_data.png
+.. image:: select_data.png
 
 Alternatively, these paths may be provided as arguments.
 
