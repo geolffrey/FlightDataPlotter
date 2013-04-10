@@ -63,6 +63,22 @@ def create_parser(paths):
     parser.add_argument('--plot-changed', dest='plot_changed',
                         default=False, action='store_true',
                         help=help_message)
+    
+    parser.add_argument('--tail', dest='tail_number',
+                      help='Aircraft tail number.')
+    parser.add_argument('--aircraft-model', dest='aircraft_model',
+                      help='Aircraft model.')
+    parser.add_argument('--aircraft-family', dest='aircraft_family',
+                      help='Aircraft family.')
+    parser.add_argument('--aircraft-series', dest='aircraft_series',
+                      help='Aircraft series.')
+    parser.add_argument('--engine-series', dest='engine_series',
+                      help='Engine series.')
+    parser.add_argument('--engine-manufacturer', dest='engine_manufacturer',
+                      help='Engine manufacturer.')
+    parser.add_argument('--engine-type', dest='engine_type',
+                      help='Engine type.')
+    
     return parser
     
     
@@ -86,6 +102,22 @@ def validate_args(lfl_path, data_path, args):
         print 'Superframes in memory argument must be -1 or positive.'
         sys.exit(1)
     
+    aircraft_info = {}
+    if args.tail_number:
+        aircraft_info['Aircraft Tail Number'] = args.tail_number
+    if args.aircraft_family:
+        aircraft_info['Aircraft Family'] = args.aircraft_family
+    if args.aircraft_series:
+        aircraft_info['Aircraft Series'] = args.aircraft_series
+    if args.aircraft_model:
+        aircraft_info['Aircraft Model'] = args.aircraft_model
+    if args.engine_manufacturer:
+        aircraft_info['Engine Manufacturer'] = args.engine_manufacturer
+    if args.engine_series:
+        aircraft_info['Engine Series'] = args.engine_series
+    if args.engine_type:
+        aircraft_info['Engine Type'] = args.engine_type
+    
     return (
         lfl_path,
         data_path,
@@ -93,6 +125,7 @@ def validate_args(lfl_path, data_path, args):
         args.superframes_in_memory,
         args.frame_doubled,
         args.plot_changed,
+        aircraft_info,
     )
 
 
@@ -226,7 +259,8 @@ class ProcessAndPlotLoops(threading.Thread):
         return message
         
     def process_data(self, lfl_path, data_path, output_path,
-                     superframes_in_memory, frame_doubled, plot_changed):
+                     superframes_in_memory, frame_doubled, plot_changed,
+                     aircraft_info):
         '''
         :param lfl_path: Path of LFL file.
         :type lfl_path: str
@@ -284,9 +318,9 @@ class ProcessAndPlotLoops(threading.Thread):
         param_names = set(itertools.chain.from_iterable(axes.values()))
         
         try:
-            lfl_parser, param_list = parse_lfl(lfl_path,
-                                               param_names=param_names,
-                                               frame_doubled=frame_doubled)
+            lfl_parser, param_list = parse_lfl(
+                lfl_path, param_names=param_names, frame_doubled=frame_doubled,
+                aircraft_info=aircraft_info)
         except configobj.ConfigObjError as err:
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
@@ -430,14 +464,14 @@ def main():
         parser = create_parser(True)
         args = parser.parse_args()
         lfl_path = args.lfl_path
-        data_path = args.data_path        
+        data_path = args.data_path
     else:
         # Input paths from dialog.
         lfl_path, data_path = file_dialogs()
         parser = create_parser(False)
-        args = parser.parse_args()        
+        args = parser.parse_args()
     
-    plot_args = validate_args(lfl_path, data_path, args)        
+    plot_args = validate_args(lfl_path, data_path, args)
     
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
@@ -457,7 +491,7 @@ def main():
                 try:
                     os.remove(hdf_path)
                 except (OSError, IOError):
-                    print 'Could not remove HDF file.'    
+                    print 'Could not remove HDF file.'
 
 
 if __name__ == '__main__':
