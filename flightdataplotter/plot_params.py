@@ -78,6 +78,9 @@ def create_parser(paths):
                       help='Engine manufacturer.')
     parser.add_argument('--engine-type', dest='engine_type',
                       help='Engine type.')
+    help_message = "Name of frame Stretched definition to apply."
+    parser.add_argument('-s', '--stretched', dest='stretched',
+                        help=help_message)
     
     return parser
     
@@ -124,6 +127,7 @@ def validate_args(lfl_path, data_path, args):
         output_path,
         args.superframes_in_memory,
         args.frame_doubled,
+        args.stretched,
         args.plot_changed,
         aircraft_info,
     )
@@ -259,8 +263,8 @@ class ProcessAndPlotLoops(threading.Thread):
         return message
         
     def process_data(self, lfl_path, data_path, output_path,
-                     superframes_in_memory, frame_doubled, plot_changed,
-                     aircraft_info):
+                     superframes_in_memory, frame_doubled, stretched,
+                     plot_changed, aircraft_info):
         '''
         :param lfl_path: Path of LFL file.
         :type lfl_path: str
@@ -320,7 +324,7 @@ class ProcessAndPlotLoops(threading.Thread):
         try:
             lfl_parser, param_list = parse_lfl(
                 lfl_path, param_names=param_names, frame_doubled=frame_doubled,
-                aircraft_info=aircraft_info)
+                stretched=stretched, aircraft_info=aircraft_info)
         except configobj.ConfigObjError as err:
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
@@ -331,7 +335,6 @@ class ProcessAndPlotLoops(threading.Thread):
             self._queue_error_message('Parameter Errors', param_errors)
         
         print 'Processing HDF file.'
-        print '==================== DISREGARD HDF LIBRARY OUTPUT ===================='
         try:
             
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
@@ -342,7 +345,6 @@ class ProcessAndPlotLoops(threading.Thread):
                       % err
             self._queue_error_message('Processing failed!', message)
             raise ValueError(message)
-        print '==================== DISREGARD HDF LIBRARY OUTPUT ===================='
             
         print 'Finished processing.'
         return axes
