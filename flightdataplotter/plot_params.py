@@ -15,6 +15,8 @@ import threading
 import time
 import wx
 
+import numpy as np
+
 from datetime import datetime
 
 from analysis_engine.library import align
@@ -209,6 +211,9 @@ def plot_parameters(hdf_path, axes):
                 label_text = param_name + " [No units]"
             else:
                 label_text = param_name + " : " + param.units
+            if np.ma.all(array.mask):
+                array = []
+                label_text += ' [all masked]'
             axis.plot(array, label=label_text)
             axis.legend(loc='upper right', **legendprops)
             if index<len(axes):
@@ -389,6 +394,7 @@ class ProcessAndPlotLoops(threading.Thread):
             if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
                 try:
+                    print self._hdf_path
                     plot_parameters(self._hdf_path, self._axes)
                 except Exception as err:
                     print 'Exception raised! %s: %s' % (err.__class__.__name__,
