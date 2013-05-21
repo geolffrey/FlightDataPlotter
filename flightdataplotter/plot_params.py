@@ -28,11 +28,10 @@ from compass.hdf import create_hdf
 from hdfaccess.file import hdf_file
 
 
-# You can't refer to matplotlib before it has been imported, hence this statement must rely upon a previous import so the order cannot be as indicated.
-## Must appear before the following imports.
-#matplotlib.use('WXAgg')
+# Must appear before the following imports.
+matplotlib.use('WXAgg')
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from pylab import setp
 
