@@ -107,7 +107,10 @@ def validate_args(lfl_path, data_path, args):
         print 'Superframes in memory argument must be -1 or positive.'
         sys.exit(1)
     
-    aircraft_info = {}
+    aircraft_info = {
+        'Frame Doubled': args.frame_doubled,
+        'Stretched': args.stretched,
+    }
     if args.tail_number:
         aircraft_info['Aircraft Tail Number'] = args.tail_number
     if args.aircraft_family:
@@ -128,8 +131,6 @@ def validate_args(lfl_path, data_path, args):
         data_path,
         output_path,
         args.superframes_in_memory,
-        args.frame_doubled,
-        args.stretched,
         args.plot_changed,
         aircraft_info,
     )
@@ -268,8 +269,7 @@ class ProcessAndPlotLoops(threading.Thread):
         return message
         
     def process_data(self, lfl_path, data_path, output_path,
-                     superframes_in_memory, frame_doubled, stretched,
-                     plot_changed, aircraft_info):
+                     superframes_in_memory, plot_changed, aircraft_info):
         '''
         :param lfl_path: Path of LFL file.
         :type lfl_path: str
@@ -277,8 +277,6 @@ class ProcessAndPlotLoops(threading.Thread):
         :type output_path: str
         :param superframes_in_memory: Number of superframes to process in memory.
         :type superframes_in_memory: int
-        :param frame_doubled: Whether or not the raw data file is frame doubled.
-        :type frame_doubled: bool
         :param plot_changed: Whether or not to plot parameters which change within the LFL.
         :type plot_changed: bool        
         '''
@@ -328,8 +326,7 @@ class ProcessAndPlotLoops(threading.Thread):
         
         try:
             lfl_parser, param_list = parse_lfl(
-                lfl_path, param_names=param_names, frame_doubled=frame_doubled,
-                stretched=stretched, aircraft_info=aircraft_info)
+                lfl_path, param_names=param_names, aircraft_info=aircraft_info)
         except configobj.ConfigObjError as err:
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
