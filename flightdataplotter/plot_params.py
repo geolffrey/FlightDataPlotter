@@ -112,7 +112,7 @@ def validate_args(lfl_path, data_path, args):
         'Stretched': args.stretched,
     }
     if args.tail_number:
-        aircraft_info['Aircraft Tail Number'] = args.tail_number
+        aircraft_info['Tail Number'] = args.tail_number
     if args.aircraft_family:
         aircraft_info['Aircraft Family'] = args.aircraft_family
     if args.aircraft_series:

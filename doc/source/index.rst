@@ -8,7 +8,6 @@ Contents:
 
    Introduction
    Overview
-   Sphinx
    Changes
    TODO
    Authors
