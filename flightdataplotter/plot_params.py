@@ -22,8 +22,8 @@ from datetime import datetime
 from analysis_engine.library import align
 
 from compass.compass_cli import configobj_error_message
-from compass.data_frame_parser import parse_lfl
-from compass.hdf import create_hdf
+from compass.arinc717.data_frame_parser import parse_lfl
+from compass.arinc717.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
 
