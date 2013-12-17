@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 '''
 This application plots LFL parameters and is intended to provide quick feedback
 to people altering LFL definitions.
