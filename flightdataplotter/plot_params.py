@@ -85,8 +85,8 @@ def create_parser(paths):
                         help=help_message)
     
     return parser
-    
-    
+
+
 def validate_args(lfl_path, data_path, args):
     '''
     Validate arguments provided to argparse.
@@ -226,8 +226,10 @@ def plot_parameters(hdf_path, axes):
 # Processing and plotting loops
 ################################################################################
 
+
 class ProcessError(Exception):
     pass
+
 
 class ProcessAndPlotLoops(threading.Thread):
     def __init__(self, hdf_path, plot_changed, lfl_path, function):
