@@ -43,6 +43,22 @@ If the data is frame doubled, the -d option must be added.
    
    $ python plot_params.py -d example.lfl flight_data.dat
 
+Frame stretching can be specified with the -s option.
+
+.. code-block:: bash
+   
+   $ python plot_params.py -s Quad example.lfl flight_data.dat
+
+Aircraft information for patches can be specified with the following options:
+
+* `--tail` (Aircraft Tail Number)
+* `--aircraft-model` (Aircraft Model)
+* `--aircraft-family` (Aircraft Family)
+* `--aircraft-series` (Aircraft Series)
+* `--engine-series` (Engine Series)
+* `--engine-manufacturer` (Engine Manufacturer)
+* `--engine-type` (Engine Type)
+
 If an error occurs during processing or when parsing the LFL file an error dialog will be displayed.
 
 ----------------------
