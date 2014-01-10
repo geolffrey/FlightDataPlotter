@@ -41,7 +41,7 @@ If the data is frame doubled, the -d option must be added.
 
 .. code-block:: bash
    
-   $ python plot_params.py -f example.lfl flight_data.dat
+   $ python plot_params.py -d example.lfl flight_data.dat
 
 If an error occurs during processing or when parsing the LFL file an error dialog will be displayed.
 
