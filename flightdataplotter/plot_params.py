@@ -472,19 +472,19 @@ def main():
 
     # Check if first argument is an option or a path.
     if len(sys.argv) > 1 and not sys.argv[1].startswith('-') \
-       and not '-h' in sys.argv:
+            or '-h' in sys.argv or '--help' in sys.argv:
         parser = create_parser(True)
         args = parser.parse_args()
         lfl_path = args.lfl_path
         data_path = args.data_path
     else:
         # Input paths from dialog.
-        lfl_path, data_path = file_dialogs()
         parser = create_parser(False)
         args = parser.parse_args()
-    
+        lfl_path, data_path = file_dialogs()
+
     plot_args = validate_args(lfl_path, data_path, args)
-    
+
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
     plot_func = lambda: process_thread.process_data(*plot_args)
