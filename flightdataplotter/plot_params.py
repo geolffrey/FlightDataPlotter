@@ -43,50 +43,59 @@ app = wx.PySimpleApp()
 
 
 # Argument parsing.
-################################################################################
+###############################################################################
 
 def create_parser(paths):
-    parser = argparse.ArgumentParser(description='Plot parameters when an LFL file changes.')
+    parser = argparse.ArgumentParser(
+        description='Plot parameters when an LFL file changes.')
     if paths:
         parser.add_argument('lfl_path', help='Path of LFL file.')
         parser.add_argument('data_path', help='Path of raw data file.')
-    parser.add_argument('-o', '--output-path', dest='output_path',
-                        action='store',
-                        help='Output file path (default will be a temporary location).')
-    parser.add_argument('-c', dest='cli',
-                        action='store_true',
-                        help='Use command line arguments rather than file dialogs.')
+    parser.add_argument(
+        '-o', '--output-path', dest='output_path',
+        action='store',
+        help='Output file path (default will be a temporary location).'
+    )
+    parser.add_argument(
+        '-c', dest='cli', action='store_true',
+        help='Use command line arguments rather than file dialogs.'
+    )
     help_message = "Number of superframes stored in memory before writing " \
         "to HDF5 file. A value of 0 will cause all superframes to be " \
         "stored in memory. Default is 100 superframes."
-    parser.add_argument('--superframes-in-memory', dest='superframes_in_memory',
-                        action='store', type=int, default=-1, help=help_message)
-    parser.add_argument('-d', '--frame-doubled', dest='frame_doubled',
-                        default=False, action='store_true',
-                        help="The input raw data is frame doubled.")
-    help_message = "Plot parameters which have changed since the last processing."
-    parser.add_argument('--plot-changed', dest='plot_changed',
-                        default=False, action='store_true',
-                        help=help_message)
-    
+    parser.add_argument(
+        '--superframes-in-memory', dest='superframes_in_memory',
+        action='store', type=int, default=-1, help=help_message
+    )
+    parser.add_argument(
+        '-d', '--frame-doubled', dest='frame_doubled', default=False,
+        action='store_true', help="The input raw data is frame doubled."
+    )
+    help_message = "Plot parameters which have changed since the last " \
+        "processing."
+    parser.add_argument(
+        '--plot-changed', dest='plot_changed', default=False,
+        action='store_true', help=help_message
+    )
+
     parser.add_argument('--tail', dest='tail_number',
-                      help='Aircraft tail number.')
+                        help='Aircraft tail number.')
     parser.add_argument('--aircraft-model', dest='aircraft_model',
-                      help='Aircraft model.')
+                        help='Aircraft model.')
     parser.add_argument('--aircraft-family', dest='aircraft_family',
-                      help='Aircraft family.')
+                        help='Aircraft family.')
     parser.add_argument('--aircraft-series', dest='aircraft_series',
-                      help='Aircraft series.')
+                        help='Aircraft series.')
     parser.add_argument('--engine-series', dest='engine_series',
-                      help='Engine series.')
+                        help='Engine series.')
     parser.add_argument('--engine-manufacturer', dest='engine_manufacturer',
-                      help='Engine manufacturer.')
+                        help='Engine manufacturer.')
     parser.add_argument('--engine-type', dest='engine_type',
-                      help='Engine type.')
+                        help='Engine type.')
     help_message = "Name of frame Stretched definition to apply."
     parser.add_argument('-s', '--stretched', dest='stretched',
                         help=help_message)
-    
+
     return parser
 
 
@@ -100,16 +109,16 @@ def validate_args(lfl_path, data_path, args):
     if not os.path.isfile(data_path):
         print 'Raw data file path does not exist.'
         sys.exit(1)
-    
+
     if args.output_path:
         output_path = args.output_path
     else:
         output_path = tempfile.mkstemp()[1]
-    
+
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
         print 'Superframes in memory argument must be -1 or positive.'
         sys.exit(1)
-    
+
     aircraft_info = {
         'Frame Doubled': args.frame_doubled,
         'Stretched': args.stretched,
@@ -128,7 +137,7 @@ def validate_args(lfl_path, data_path, args):
         aircraft_info['Engine Series'] = args.engine_series
     if args.engine_type:
         aircraft_info['Engine Type'] = args.engine_type
-    
+
     return (
         lfl_path,
         data_path,
@@ -140,7 +149,7 @@ def validate_args(lfl_path, data_path, args):
 
 
 # Processing and plotting functions
-################################################################################
+###############################################################################
 
 
 def plot_parameters(hdf_path, axes):
@@ -156,13 +165,13 @@ def plot_parameters(hdf_path, axes):
             params[param_name] = param
             max_freq = max(max_freq, param.frequency)
             min_freq = min(min_freq, param.frequency)
-            
+
     for param_name, param in params.iteritems():
         if max_freq == param.frequency:
             param_max_freq = param
         if param.frequency == min_freq:
             param_min_freq_len = len(param.array)
-    
+
     # Truncate parameter arrays to successfully align them since the file
     # has not been through split sections.
     for param_name, param in params.iteritems():
@@ -171,11 +180,11 @@ def plot_parameters(hdf_path, axes):
             print 'Truncated %s from %d to %d for display purposes' % (
                 param_name, len(param.array), array_len)
             param.array = param.array[:array_len]
-    
-    #===========================================================================
+
+    #==========================================================================
     # Plot Preparation
-    #===========================================================================
-    
+    #==========================================================================
+
     # Invariant parameters are identified here. They could be inserted into
     # the plot configuration file, but this is more straightforward.
     plt.rc('axes', grid=True)
@@ -186,10 +195,10 @@ def plot_parameters(hdf_path, axes):
     legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
 
     # Start by making a big clean canvas
-    fig = plt.figure(facecolor='white', figsize=(8,6))
+    fig = plt.figure(facecolor='white', figsize=(8, 6))
     fig.canvas.set_window_title("Processed on %s" %
                                 datetime.now().strftime('%A, %d %B %Y at %X'))
-    
+
     # Add the "reference" altitude plot, and title this
     # (If we title the empty plot, it acquires default 0-1 scales)
     param_name = axes[1][0]
@@ -197,10 +206,11 @@ def plot_parameters(hdf_path, axes):
     array = align(param, param_max_freq)
     first_axis = fig.add_subplot(len(axes), 1, 1)
     first_axis.plot(array, label=param_name)
-    
-    #plt.title("Processed on %s" % datetime.now().strftime('%A, %d %B %Y at %X'))
+
+    ####plt.title("Processed on %s" %
+    ####          datetime.now().strftime('%A, %d %B %Y at %X'))
     setp(first_axis.get_xticklabels(), visible=False)
-    
+
     # Now plot the additional data from the AXIS_N lists at the top of the lfl
     for index, param_names in axes.iteritems():
         if index == 1:
@@ -208,10 +218,10 @@ def plot_parameters(hdf_path, axes):
         axis = fig.add_subplot(len(axes), 1, index, sharex=first_axis)
         for param_name in param_names:
             param = params[param_name]
-            # Data is aligned in time but the samples are not interpolated so 
+            # Data is aligned in time but the samples are not interpolated so
             # that scaling issues can be easily addressed
             array = align(param, param_max_freq, interpolate=False)
-            if param.units == None:
+            if param.units is None:
                 label_text = param_name + " [No units]"
             else:
                 label_text = param_name + " : " + param.units
@@ -220,14 +230,14 @@ def plot_parameters(hdf_path, axes):
                 label_text += ' [all masked]'
             axis.plot(array, label=label_text)
             axis.legend(loc='upper right', **legendprops)
-            if index<len(axes):
+            if index < len(axes):
                 setp(axis.get_xticklabels(), visible=False)
-        plt.legend(prop={'size':10})
+        plt.legend(prop={'size': 10})
     plt.show()
 
 
 # Processing and plotting loops
-################################################################################
+###############################################################################
 
 
 class ProcessError(Exception):
@@ -243,27 +253,27 @@ class ProcessAndPlotLoops(threading.Thread):
         self._hdf_path = hdf_path
         self._lfl_path = lfl_path
         self._function = function
-        
+
         self._changed_params = set()
         self._plot_changed = plot_changed
-        
+
         self.__error_lock = threading.Lock()
         self.__error_messages = []
-        
+
         self.exit_loop = threading.Event()
         self._ready_to_plot = threading.Event()
-        
+
         self._axes = None
-        
+
         self._last_config = None
-        
+
         super(ProcessAndPlotLoops, self).__init__()
-    
+
     def _queue_error_message(self, title, message):
         self.__error_lock.acquire()
         self.__error_messages.append((title, message))
         self.__error_lock.release()
-    
+
     def _get_error_message(self):
         self.__error_lock.acquire()
         if self.__error_messages:
@@ -272,7 +282,7 @@ class ProcessAndPlotLoops(threading.Thread):
             message = None
         self.__error_lock.release()
         return message
-        
+
     def process_data(self, lfl_path, data_path, output_path,
                      superframes_in_memory, plot_changed, aircraft_info):
         '''
@@ -280,10 +290,12 @@ class ProcessAndPlotLoops(threading.Thread):
         :type lfl_path: str
         :param output_path: Output path of HDF file.
         :type output_path: str
-        :param superframes_in_memory: Number of superframes to process in memory.
+        :param superframes_in_memory: Number of superframes to process in
+            memory.
         :type superframes_in_memory: int
-        :param plot_changed: Whether or not to plot parameters which change within the LFL.
-        :type plot_changed: bool        
+        :param plot_changed: Whether or not to plot parameters which change
+            within the LFL.
+        :type plot_changed: bool
         '''
         # Load config to read AXIS groups.
         try:
@@ -292,32 +304,33 @@ class ProcessAndPlotLoops(threading.Thread):
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
             raise ValueError(message)
-        
+
         if self._last_config:
             for param_name, param_conf in config['Parameters'].iteritems():
                 # TODO: Param added, not only changed.
                 if param_name in self._last_config['Parameters'] and \
                    param_conf != self._last_config['Parameters'][param_name]:
                     self._changed_params.add(param_name)
-        
+
         self._last_config = dict(config)
-        
+
         axes = {1: ['Altitude STD']}
         if plot_changed and self._changed_params:
             # Add an axis for parameters which have changed.
             axes[2] = list(self._changed_params)
-            
+
         # Read AXIS_* parameter groups.
         axis_offset = len(axes)
         group_index = 1
         while True:
             group_name = 'AXIS_%d' % group_index
             try:
-                axes[group_index + axis_offset] = config['Parameter Group'][group_name]
+                axis = config['Parameter Group'][group_name]
+                axes[group_index + axis_offset] = axis
             except KeyError:
                 break
             group_index += 1
-        
+
         if len(axes) == 1:
             message = 'AXIS_1 parameter group is not defined! Please define ' \
                       'a parameter group within the LFL named AXIS_1. ' \
@@ -338,14 +351,14 @@ class ProcessAndPlotLoops(threading.Thread):
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
             raise ValueError(message)
-        
+
         param_errors = lfl_parser.format_errors()
         if param_errors:
             self._queue_error_message('Parameter Errors', param_errors)
-        
+
         print 'Processing HDF file.'
         try:
-            
+
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
         except Exception as err:
@@ -354,10 +367,10 @@ class ProcessAndPlotLoops(threading.Thread):
                       % err
             self._queue_error_message('Processing failed!', message)
             raise ValueError(message)
-            
+
         print 'Finished processing.'
         return axes
-    
+
     def run(self):
         '''
         The processing loop.
@@ -417,7 +430,7 @@ class Frame(wx.Frame):
         #self.Bind(wx.EVT_CLOSE, self.OnClose)
         panel = wx.Panel(self)
         box = wx.BoxSizer(wx.VERTICAL)
-        
+
         m_text = wx.StaticText(panel, -1, message, size=(340, 100),
                                style=wx.TE_MULTILINE)
         m_text.SetSize(m_text.GetBestSize())
@@ -426,7 +439,7 @@ class Frame(wx.Frame):
         button.Bind(wx.EVT_BUTTON, self.OnClose)
         box.Add(m_text, flag=wx.ALL)
         box.Add(button, flag=wx.EXPAND)
-        
+
         panel.SetSizerAndFit(box)
         self.Layout()
         self.Fit()
@@ -454,13 +467,13 @@ def file_dialogs():
         show_error_dialog('Error!', 'An LFL file must be selected.')
         sys.exit(1)
     data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
-                               wildcard="*.*")
+                                wildcard="*.*")
     if data_dialog.ShowModal() == wx.ID_OK:
         data_path = os.path.join(data_dialog.GetDirectory(),
                                  data_dialog.GetFilename())
     else:
-        show_error_dialog('Error!', 'A raw data file must be selected.')    
-        sys.exit(1)        
+        show_error_dialog('Error!', 'A raw data file must be selected.')
+        sys.exit(1)
     return lfl_path, data_path
 
 
