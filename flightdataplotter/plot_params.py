@@ -325,10 +325,12 @@ class ProcessAndPlotLoops(threading.Thread):
                       'AXIS_2, AXIS_3, etc.'
             self._queue_error_message('AXIS_1 group missing', message)
             raise ValueError(message)
-        
+
         # Create a list of all parameters within the groups.
         param_names = set(itertools.chain.from_iterable(axes.values()))
-        
+        if 'Superframe Counter' in param_names:
+            param_names.remove('Superframe Counter')
+
         try:
             lfl_parser, param_list = parse_lfl(
                 lfl_path, param_names=param_names, aircraft_info=aircraft_info)
