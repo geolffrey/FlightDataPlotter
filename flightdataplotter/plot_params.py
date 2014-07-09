@@ -9,6 +9,7 @@ to people altering LFL definitions.
 import argparse
 import configobj
 import itertools
+import logging
 import matplotlib
 
 import os
@@ -520,4 +521,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
     main()
