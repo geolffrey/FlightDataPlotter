@@ -327,6 +327,9 @@ class ProcessAndPlotLoops(threading.Thread):
             group_name = 'AXIS_%d' % group_index
             try:
                 axis = config['Parameter Group'][group_name]
+                # Force a single entry to look like a list.
+                if axis is not list:
+                    axis = [axis]
                 axes[group_index + axis_offset] = axis
             except KeyError:
                 break
