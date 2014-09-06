@@ -328,9 +328,10 @@ class ProcessAndPlotLoops(threading.Thread):
             try:
                 axis = config['Parameter Group'][group_name]
                 # Force a single entry to look like a list.
-                if axis is not list:
-                    axis = [axis]
-                axes[group_index + axis_offset] = axis
+                if hasattr(axis, "__iter__"):
+                    axes[group_index + axis_offset] = axis
+                else:
+                    axes[group_index + axis_offset] = [axis]
             except KeyError:
                 break
             group_index += 1
