@@ -123,11 +123,11 @@ def copy_file_part(src_path, percent_start=0, percent_stop=100):
     from compass.utils import open_raw_data
     ext = '_%d->%d.dat' % (percent_start, percent_stop)
     dest_path = os.path.splitext(src_path)[0] + ext
-    
+    if os.path.isfile(dest_path) and os.path.getsize(dest_path):
+        print 'Partial file already exists; using: %s' % dest_path
+        return dest_path
     try:
         src = open_raw_data(src_path)
-        
-        #size = os.path.getsize(src_path)
         src.seek(0, 2)
         size = src.tell()
         src.seek(0)
