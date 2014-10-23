@@ -81,6 +81,14 @@ def create_parser():
         action='store_true', 
         help="Plot parameters which have changed since the last processing."
     )
+    parser.add_argument(
+        '--start', dest='percent_start', type=int, default=0,
+        help='Percentage into the file to start inspecting.'
+    )
+    parser.add_argument(
+        '--stop', dest='percent_stop', type=int, default=100,
+        help='Percentage into the file to inspect up until.'
+    )
     parser.add_argument('--tail', dest='tail_number',
         help='Aircraft tail number.')
     parser.add_argument('--aircraft-model', dest='aircraft_model',
@@ -99,8 +107,46 @@ def create_parser():
         help="Name of frame Stretched definition to apply.")
 
     return parser
+  
+   
+def copy_file_part(src_path, percent_start=0, percent_stop=100):
+    '''
+    Copies percentage of the source path to a new destination file. If source
+    is compressed, output is read out into a decompressed file.
     
+    src_path can be either a zip (.SAC), bz2 or uncompressed data file
     
+    NOTE: Reads data into memory
+    TODO: Move to flightdatautilities.filesystem_tools ?
+    '''
+
+    from compass.utils import open_raw_data
+    ext = '_%d->%d.dat' % (percent_start, percent_stop)
+    dest_path = os.path.splitext(src_path)[0] + ext
+    
+    try:
+        src = open_raw_data(src_path)
+        
+        #size = os.path.getsize(src_path)
+        src.seek(0, 2)
+        size = src.tell()
+        src.seek(0)
+        offset = int(percent_start * size / 100.0)
+        if offset % 2:
+            offset += 1  # make sure the start is even
+        read_end = int(percent_stop * size / 100.0)
+        amount = read_end - offset
+        if amount % 2:
+            amount -= 1  # make multiple of np.short (2 bytes)
+        src.seek(offset)
+        data = src.read(amount)
+    finally:
+        src.close()
+    with open(dest_path, 'wb') as dest:
+        dest.write(data)
+    return dest_path
+
+
 def validate_args(parser):
     '''
     Validate arguments provided to argparse.
@@ -114,8 +160,13 @@ def validate_args(parser):
     if not args.data_path:
         args.data_path = data_file_dialog()
     if not os.path.isfile(args.data_path):
-        parser.error('Data file path not valid: %s' % args.data_path)   
+        parser.error('Data file path not valid: %s' % args.data_path)
         
+    if args.percent_start > 0 or args.percent_stop < 100:
+        args.data_path = copy_file_part(
+            args.data_path, args.percent_start, args.percent_stop)
+        print "Read data chunk into new file: %s" % args.data_path
+
     if not args.output_path:
         args.output_path = tempfile.mkstemp()[1] + '.hdf5'
     
