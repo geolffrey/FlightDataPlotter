@@ -23,7 +23,7 @@ import numpy as np
 
 from datetime import datetime
 
-from analysis_engine.library import align
+from analysis_engine.library import align, np_ma_masked_zeros_like
 
 from compass.compass_cli import configobj_error_message
 from compass.arinc717.data_frame_parser import parse_lfl
@@ -46,80 +46,83 @@ app = wx.PySimpleApp()
 # Argument parsing.
 ###############################################################################
 
-def create_parser(paths):
+def create_parser():
     parser = argparse.ArgumentParser(
-        description='Plot parameters when an LFL file changes.')
-    if paths:
-        parser.add_argument('lfl_path', help='Path of LFL file.')
-        parser.add_argument('data_path', help='Path of raw data file.')
+        description='Plot parameters when an LFL file changes.'
+    )
+    parser.add_argument('lfl_path', nargs='?',
+        help='Path of LFL file. If not provided, GUI File Browser will appear.'
+    )
+    parser.add_argument('data_path', nargs='?',
+        help='Path of raw data file.'
+    )
+    #parser.add_argument('--read-percent') # TODO!! 0 to 100
     parser.add_argument(
         '-o', '--output-path', dest='output_path',
         action='store',
         help='Output file path (default will be a temporary location).'
     )
-    parser.add_argument(
-        '-c', dest='cli', action='store_true',
+    parser.add_argument('-c', dest='cli', action='store_true',
         help='Use command line arguments rather than file dialogs.'
     )
     help_message = "Number of superframes stored in memory before writing " \
         "to HDF5 file. A value of 0 will cause all superframes to be " \
         "stored in memory. Default is 100 superframes."
-    parser.add_argument(
-        '--superframes-in-memory', dest='superframes_in_memory',
-        action='store', type=int, default=-1, help=help_message
+    parser.add_argument('--superframes-in-memory',
+        dest='superframes_in_memory', action='store', type=int, default=-1,
+        help=help_message
+    )
+    parser.add_argument('-d', '--frame-doubled', 
+        dest='frame_doubled', default=False, action='store_true',
+        help="The input raw data is frame doubled."
     )
     parser.add_argument(
-        '-d', '--frame-doubled', dest='frame_doubled', default=False,
-        action='store_true', help="The input raw data is frame doubled."
+        '--plot-changed', dest='plot_changed', default=False, 
+        action='store_true', 
+        help="Plot parameters which have changed since the last processing."
     )
-    help_message = "Plot parameters which have changed since the last " \
-        "processing."
-    parser.add_argument(
-        '--plot-changed', dest='plot_changed', default=False,
-        action='store_true', help=help_message
-    )
-
     parser.add_argument('--tail', dest='tail_number',
-                        help='Aircraft tail number.')
+        help='Aircraft tail number.')
     parser.add_argument('--aircraft-model', dest='aircraft_model',
-                        help='Aircraft model.')
+        help='Aircraft model.')
     parser.add_argument('--aircraft-family', dest='aircraft_family',
-                        help='Aircraft family.')
+        help='Aircraft family.')
     parser.add_argument('--aircraft-series', dest='aircraft_series',
-                        help='Aircraft series.')
+        help='Aircraft series.')
     parser.add_argument('--engine-series', dest='engine_series',
-                        help='Engine series.')
+        help='Engine series.')
     parser.add_argument('--engine-manufacturer', dest='engine_manufacturer',
-                        help='Engine manufacturer.')
+        help='Engine manufacturer.')
     parser.add_argument('--engine-type', dest='engine_type',
-                        help='Engine type.')
-    help_message = "Name of frame Stretched definition to apply."
+        help='Engine type.')
     parser.add_argument('-s', '--stretched', dest='stretched',
-                        help=help_message)
+        help="Name of frame Stretched definition to apply.")
 
     return parser
-
-
-def validate_args(lfl_path, data_path, args):
+    
+    
+def validate_args(parser):
     '''
     Validate arguments provided to argparse.
     '''
-    if not os.path.isfile(lfl_path):
-        print 'LFL path does not exist.'
-        sys.exit(1)
-    if not os.path.isfile(data_path):
-        print 'Raw data file path does not exist.'
-        sys.exit(1)
-
-    if args.output_path:
-        output_path = args.output_path
-    else:
-        output_path = tempfile.mkstemp()[1]
-
+    args = parser.parse_args()
+    if not args.lfl_path:
+        args.lfl_path = lfl_file_dialog()
+    if not os.path.isfile(args.lfl_path):
+        parser.error('LFL file path not valid: %s' % args.lfl_path)
+        
+    if not args.data_path:
+        args.data_path = data_file_dialog()
+    if not os.path.isfile(args.data_path):
+        parser.error('Data file path not valid: %s' % args.data_path)   
+        
+    if not args.output_path:
+        args.output_path = tempfile.mkstemp()[1] + '.hdf5'
+    
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
-        print 'Superframes in memory argument must be -1 or positive.'
-        sys.exit(1)
-
+        parser.error('Superframes in memory argument must be -1 or positive. '\
+                     'Found %s' % args.superframes_in_memory)
+    
     aircraft_info = {
         'Frame Doubled': args.frame_doubled,
         'Stretched': args.stretched,
@@ -140,9 +143,9 @@ def validate_args(lfl_path, data_path, args):
         aircraft_info['Engine Type'] = args.engine_type
 
     return (
-        lfl_path,
-        data_path,
-        output_path,
+        args.lfl_path,
+        args.data_path,
+        args.output_path,
         args.superframes_in_memory,
         args.plot_changed,
         aircraft_info,
@@ -153,20 +156,18 @@ def validate_args(lfl_path, data_path, args):
 ###############################################################################
 
 
-def plot_parameters(hdf_path, axes):
+def plot_parameters(params, axes, name=''):
     '''
     Plot resulting parameters.
     '''
     print 'Plotting parameters.'
-    params = {}
     max_freq = 0
     min_freq = float('inf')
-    with hdf_file(hdf_path) as hdf:
-        for param_name, param in hdf.iteritems():
-            params[param_name] = param
-            max_freq = max(max_freq, param.frequency)
-            min_freq = min(min_freq, param.frequency)
 
+    for name, param in params.iteritems():
+        max_freq = max(max_freq, param.frequency)
+        min_freq = min(min_freq, param.frequency)
+            
     for param_name, param in params.iteritems():
         if max_freq == param.frequency:
             param_max_freq = param
@@ -196,9 +197,9 @@ def plot_parameters(hdf_path, axes):
     legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
 
     # Start by making a big clean canvas
-    fig = plt.figure(facecolor='white', figsize=(8, 6))
-    fig.canvas.set_window_title("Processed on %s" %
-                                datetime.now().strftime('%A, %d %B %Y at %X'))
+    fig = plt.figure(facecolor='white', figsize=(8,6))
+    fig.canvas.set_window_title("%s %s" %  (name,
+                                datetime.now().strftime('%A, %d %B %Y at %X')))
 
     # Add the "reference" altitude plot, and title this
     # (If we title the empty plot, it acquires default 0-1 scales)
@@ -217,18 +218,37 @@ def plot_parameters(hdf_path, axes):
         if index == 1:
             continue
         axis = fig.add_subplot(len(axes), 1, index, sharex=first_axis)
+        # Avoid iterating over string
+        if isinstance(param_names, basestring):
+            param_names = [param_names]
         for param_name in param_names:
             param = params[param_name]
             # Data is aligned in time but the samples are not interpolated so
             # that scaling issues can be easily addressed
-            array = align(param, param_max_freq, interpolate=False)
-            if param.units is None:
-                label_text = param_name + " [No units]"
-            else:
-                label_text = param_name + " : " + param.units
-            if np.ma.all(array.mask):
+            label_text = param.name
+            if np.ma.all(param.array.mask):
                 array = []
-                label_text += ' [all masked]'
+                label_text += ' <ALL MASKED>'
+            elif param.data_type == 'ASCII' or param.array.dtype.char == 'S':
+                print "Warning: ASCII not supported. Param '%s'" % param
+                array = []
+                label_text += ' <ASCII NOT DRAWN>'
+            else:
+                # Data is aligned in time but the samples are not interpolated so 
+                # that scaling issues can be easily addressed            
+                try:
+                    array = align(param, param_max_freq, interpolate=False)
+                except:
+                    print "Warning: Unable to align data, so not drawing parameter '%s'" % param.name
+                    array = np_ma_masked_zeros_like(param.array)
+            
+            if param.units == None:
+                label_text += " [No units]"
+            else:
+                label_text +=" : " + param.units
+            values_mapping = getattr(param.array, 'values_mapping', None)
+            if values_mapping:
+                label_text += '\n%s' % values_mapping            
             axis.plot(array, label=label_text)
             axis.legend(loc='upper right', **legendprops)
             if index < len(axes):
@@ -356,14 +376,14 @@ class ProcessAndPlotLoops(threading.Thread):
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
             raise ValueError(message)
-
+            #return #?????????? 
+        
         param_errors = lfl_parser.format_errors()
         if param_errors:
             self._queue_error_message('Parameter Errors', param_errors)
-
-        print 'Processing HDF file.'
+        
+        print 'Processing params: %s' % ', '.join([p.name for p in param_list])
         try:
-
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
         except Exception as err:
@@ -371,9 +391,9 @@ class ProcessAndPlotLoops(threading.Thread):
                       'the LFL and raw data file are correct. Exception: %s' \
                       % err
             self._queue_error_message('Processing failed!', message)
-            raise ValueError(message)
+            raise ProcessError(message)
 
-        print 'Finished processing.'
+        print 'Finished processing, output: %s' % output_path
         return axes
 
     def run(self):
@@ -416,9 +436,15 @@ class ProcessAndPlotLoops(threading.Thread):
             if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
                 try:
-                    print self._hdf_path
-                    plot_parameters(self._hdf_path, self._axes)
+                    with hdf_file(self._hdf_path) as hdf:
+                        # iterate over whole file as only those params required were converted
+                        params = hdf.get_params()
+                    name = os.path.basename(self._hdf_path)
+                    plot_parameters(params, self._axes, name=name)
+                except ValueError as err:
+                    print 'Waiting for you to fix this error: %s' % err
                 except Exception as err:
+                    # traceback required?
                     print 'Exception raised! %s: %s' % (err.__class__.__name__,
                                                         err)
             else:
@@ -462,24 +488,28 @@ def show_error_dialog(title, message):
     app.MainLoop()
 
 
-def file_dialogs():
+def lfl_file_dialog():
+    #TOOD: Remember last directory accessed!
     lfl_dialog = wx.FileDialog(None, message="Please choose an LFL file",
+                               defaultDir='',
                                wildcard="*.lfl")
     if lfl_dialog.ShowModal() == wx.ID_OK:
-        lfl_path = os.path.join(lfl_dialog.GetDirectory(),
-                                lfl_dialog.GetFilename())
+        lfl_path = lfl_dialog.GetPath()
     else:
         show_error_dialog('Error!', 'An LFL file must be selected.')
         sys.exit(1)
+    return lfl_path
+
+def data_file_dialog():        
     data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
+                                defaultDir='',
                                 wildcard="*.*")
     if data_dialog.ShowModal() == wx.ID_OK:
-        data_path = os.path.join(data_dialog.GetDirectory(),
-                                 data_dialog.GetFilename())
+        data_path = data_dialog.GetPath()
     else:
-        show_error_dialog('Error!', 'A raw data file must be selected.')
-        sys.exit(1)
-    return lfl_path, data_path
+        show_error_dialog('Error!', 'A raw data file must be selected.')    
+        sys.exit(1)        
+    return data_path
 
 
 def main():
@@ -488,26 +518,14 @@ def main():
     print '  - http://www.flightdatacommunity.com'
     print ''
 
-    # Check if first argument is an option or a path.
-    if len(sys.argv) > 1 and not sys.argv[1].startswith('-') \
-            or '-h' in sys.argv or '--help' in sys.argv:
-        parser = create_parser(True)
-        args = parser.parse_args()
-        lfl_path = args.lfl_path
-        data_path = args.data_path
-    else:
-        # Input paths from dialog.
-        parser = create_parser(False)
-        args = parser.parse_args()
-        lfl_path, data_path = file_dialogs()
-
-    plot_args = validate_args(lfl_path, data_path, args)
-
+    parser = create_parser()
+    plot_args = validate_args(parser)
+    
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
+    plot_changed = plot_args[4]
     plot_func = lambda: process_thread.process_data(*plot_args)
-    process_thread = ProcessAndPlotLoops(hdf_path, args.plot_changed,
-                                         lfl_path, plot_func)
+    process_thread = ProcessAndPlotLoops(hdf_path, plot_changed, lfl_path, plot_func)
     process_thread.start()
     try:
         process_thread.plot_loop()
@@ -516,12 +534,13 @@ def main():
         process_thread.exit_loop.set()
     finally:
         # If the file is in a temporary location, remove it.
-        if not args.output_path:
-            if os.path.exists(hdf_path):
-                try:
-                    os.remove(hdf_path)
-                except (OSError, IOError):
-                    print 'Could not remove HDF file.'
+        if hdf_path.startswith(tempfile.gettempdir()) \
+           and os.path.isfile(hdf_path):
+            try:
+                os.remove(hdf_path)
+                print 'Removed temporary HDF file: %s.' % hdf_path
+            except (OSError, IOError):
+                print 'Could not remove temporary HDF file: %s.' % hdf_path
 
 
 if __name__ == '__main__':
