@@ -72,13 +72,13 @@ def create_parser():
         dest='superframes_in_memory', action='store', type=int, default=-1,
         help=help_message
     )
-    parser.add_argument('-d', '--frame-doubled', 
+    parser.add_argument('-d', '--frame-doubled',
         dest='frame_doubled', default=False, action='store_true',
         help="The input raw data is frame doubled."
     )
     parser.add_argument(
-        '--plot-changed', dest='plot_changed', default=False, 
-        action='store_true', 
+        '--plot-changed', dest='plot_changed', default=False,
+        action='store_true',
         help="Plot parameters which have changed since the last processing."
     )
     parser.add_argument(
@@ -107,15 +107,15 @@ def create_parser():
         help="Name of frame Stretched definition to apply.")
 
     return parser
-  
-   
+
+
 def copy_file_part(src_path, percent_start=0, percent_stop=100):
     '''
     Copies percentage of the source path to a new destination file. If source
     is compressed, output is read out into a decompressed file.
-    
+
     src_path can be either a zip (.SAC), bz2 or uncompressed data file
-    
+
     NOTE: Reads data into memory
     TODO: Move to flightdatautilities.filesystem_tools ?
     '''
@@ -156,12 +156,12 @@ def validate_args(parser):
         args.lfl_path = lfl_file_dialog()
     if not os.path.isfile(args.lfl_path):
         parser.error('LFL file path not valid: %s' % args.lfl_path)
-        
+
     if not args.data_path:
         args.data_path = data_file_dialog()
     if not os.path.isfile(args.data_path):
         parser.error('Data file path not valid: %s' % args.data_path)
-        
+
     if args.percent_start > 0 or args.percent_stop < 100:
         args.data_path = copy_file_part(
             args.data_path, args.percent_start, args.percent_stop)
@@ -169,11 +169,11 @@ def validate_args(parser):
 
     if not args.output_path:
         args.output_path = tempfile.mkstemp()[1] + '.hdf5'
-    
+
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
         parser.error('Superframes in memory argument must be -1 or positive. '\
                      'Found %s' % args.superframes_in_memory)
-    
+
     aircraft_info = {
         'Frame Doubled': args.frame_doubled,
         'Stretched': args.stretched,
@@ -218,7 +218,7 @@ def plot_parameters(params, axes, name=''):
     for name, param in params.iteritems():
         max_freq = max(max_freq, param.frequency)
         min_freq = min(min_freq, param.frequency)
-            
+
     for param_name, param in params.iteritems():
         if max_freq == param.frequency:
             param_max_freq = param
@@ -248,9 +248,9 @@ def plot_parameters(params, axes, name=''):
     legendprops = dict(shadow=True, fancybox=True, markerscale=0.5, prop=prop)
 
     # Start by making a big clean canvas
-    fig = plt.figure(facecolor='white', figsize=(8,6))
-    fig.canvas.set_window_title("%s %s" %  (name,
-                                datetime.now().strftime('%A, %d %B %Y at %X')))
+    fig = plt.figure(facecolor='white', figsize=(8, 6))
+    fig.canvas.set_window_title("%s %s" % (
+        name, datetime.now().strftime('%A, %d %B %Y at %X')))
 
     # Add the "reference" altitude plot, and title this
     # (If we title the empty plot, it acquires default 0-1 scales)
@@ -285,21 +285,22 @@ def plot_parameters(params, axes, name=''):
                 array = []
                 label_text += ' <ASCII NOT DRAWN>'
             else:
-                # Data is aligned in time but the samples are not interpolated so 
-                # that scaling issues can be easily addressed            
+                # Data is aligned in time but the samples are not
+                # interpolated so that scaling issues can be easily addressed
                 try:
                     array = align(param, param_max_freq, interpolate=False)
                 except:
-                    print "Warning: Unable to align data, so not drawing parameter '%s'" % param.name
+                    print "Warning: Unable to align data, so not drawing "\
+                          "parameter '%s'" % param.name
                     array = np_ma_masked_zeros_like(param.array)
-            
+
             if param.units == None:
                 label_text += " [No units]"
             else:
-                label_text +=" : " + param.units
+                label_text += " : " + param.units
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
-                label_text += '\n%s' % values_mapping            
+                label_text += '\n%s' % values_mapping
             axis.plot(array, label=label_text)
             axis.legend(loc='upper right', **legendprops)
             if index < len(axes):
@@ -427,12 +428,11 @@ class ProcessAndPlotLoops(threading.Thread):
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
             raise ValueError(message)
-            #return #?????????? 
-        
+
         param_errors = lfl_parser.format_errors()
         if param_errors:
             self._queue_error_message('Parameter Errors', param_errors)
-        
+
         print 'Processing params: %s' % ', '.join([p.name for p in param_list])
         try:
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
@@ -488,7 +488,8 @@ class ProcessAndPlotLoops(threading.Thread):
                 self._ready_to_plot.clear()
                 try:
                     with hdf_file(self._hdf_path) as hdf:
-                        # iterate over whole file as only those params required were converted
+                        # iterate over whole file as only those params
+                        # required were converted earlier into the HDF file
                         params = hdf.get_params()
                     name = os.path.basename(self._hdf_path)
                     plot_parameters(params, self._axes, name=name)
@@ -551,15 +552,16 @@ def lfl_file_dialog():
         sys.exit(1)
     return lfl_path
 
-def data_file_dialog():        
+
+def data_file_dialog():
     data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
                                 defaultDir='',
                                 wildcard="*.*")
     if data_dialog.ShowModal() == wx.ID_OK:
         data_path = data_dialog.GetPath()
     else:
-        show_error_dialog('Error!', 'A raw data file must be selected.')    
-        sys.exit(1)        
+        show_error_dialog('Error!', 'A raw data file must be selected.')
+        sys.exit(1)
     return data_path
 
 
@@ -571,12 +573,13 @@ def main():
 
     parser = create_parser()
     plot_args = validate_args(parser)
-    
+
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
     plot_changed = plot_args[4]
     plot_func = lambda: process_thread.process_data(*plot_args)
-    process_thread = ProcessAndPlotLoops(hdf_path, plot_changed, lfl_path, plot_func)
+    process_thread = ProcessAndPlotLoops(hdf_path, plot_changed,
+                                         lfl_path, plot_func)
     process_thread.start()
     try:
         process_thread.plot_loop()
