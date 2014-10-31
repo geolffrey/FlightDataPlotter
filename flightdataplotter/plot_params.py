@@ -207,7 +207,7 @@ def validate_args(parser):
 ###############################################################################
 
 
-def plot_parameters(params, axes, name=''):
+def plot_parameters(params, axes, title=''):
     '''
     Plot resulting parameters.
     '''
@@ -250,7 +250,7 @@ def plot_parameters(params, axes, name=''):
     # Start by making a big clean canvas
     fig = plt.figure(facecolor='white', figsize=(8, 6))
     fig.canvas.set_window_title("%s %s" % (
-        name, datetime.now().strftime('%A, %d %B %Y at %X')))
+        title, datetime.now().strftime('%A, %d %B %Y at %X')))
 
     # Add the "reference" altitude plot, and title this
     # (If we title the empty plot, it acquires default 0-1 scales)
