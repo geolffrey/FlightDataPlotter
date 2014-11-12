@@ -491,8 +491,8 @@ class ProcessAndPlotLoops(threading.Thread):
                         # iterate over whole file as only those params
                         # required were converted earlier into the HDF file
                         params = hdf.get_params()
-                    name = os.path.basename(self._hdf_path)
-                    plot_parameters(params, self._axes, name=name)
+                    title = os.path.basename(self._hdf_path)
+                    plot_parameters(params, self._axes, title=title)
                 except ValueError as err:
                     print 'Waiting for you to fix this error: %s' % err
                 except Exception as err:
