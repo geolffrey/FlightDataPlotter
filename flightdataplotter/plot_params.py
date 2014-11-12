@@ -438,9 +438,9 @@ class ProcessAndPlotLoops(threading.Thread):
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
         except Exception as err:
-            message = 'Error occurred during processing. Please ensure both ' \
-                      'the LFL and raw data file are correct. Exception: %s' \
-                      % err
+            message = 'Error occurred during processing. Please ensure the ' \
+                'frame doubling is declared if applicable as well as both ' \
+                'the LFL and raw data file are correct. Exception:\n%s' % err
             self._queue_error_message('Processing failed!', message)
             raise ProcessError(message)
 
@@ -461,7 +461,8 @@ class ProcessAndPlotLoops(threading.Thread):
                     self._axes = self._function()
                 except ValueError:
                     continue
-                except ProcessError:
+                except ProcessError, x:
+                    print x
                     self.exit_loop.set()
                     return
                 else:
