@@ -168,7 +168,9 @@ def validate_args(parser):
         print "Read data chunk into new file: %s" % args.data_path
 
     if not args.output_path:
-        args.output_path = tempfile.mkstemp()[1] + '.hdf5'
+        args.output_path = os.path.join(
+            tempfile.gettempdir(),
+            os.path.splitext(os.path.basename(args.data_path))[0] + '.hdf5')
 
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
         parser.error('Superframes in memory argument must be -1 or positive. '\
