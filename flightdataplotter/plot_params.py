@@ -49,62 +49,63 @@ app = wx.PySimpleApp()
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        description='Plot parameters when an LFL file changes.'
-    )
-    parser.add_argument('lfl_path', nargs='?',
-        help='Path of LFL file. If not provided, GUI File Browser will appear.'
-    )
-    parser.add_argument('data_path', nargs='?',
-        help='Path of raw data file.'
-    )
+        description='Plot parameters when an LFL file changes.')
+    parser.add_argument(
+        'lfl_path', nargs='?',
+        help='Path of LFL file. If not provided, GUI File Browser will appear.')
+    parser.add_argument('data_path', nargs='?', help='Path of raw data file.')
     #parser.add_argument('--read-percent') # TODO!! 0 to 100
     parser.add_argument(
         '-o', '--output-path', dest='output_path',
         action='store',
-        help='Output file path (default will be a temporary location).'
-    )
-    parser.add_argument('-c', dest='cli', action='store_true',
-        help='Use command line arguments rather than file dialogs.'
-    )
+        help='Output file path (default will be a temporary location).')
+    parser.add_argument(
+        '-c', dest='cli', action='store_true',
+        help='Use command line arguments rather than file dialogs.')
     help_message = "Number of superframes stored in memory before writing " \
         "to HDF5 file. A value of 0 will cause all superframes to be " \
         "stored in memory. Default is 100 superframes."
-    parser.add_argument('--superframes-in-memory',
+    parser.add_argument(
+        '--superframes-in-memory',
         dest='superframes_in_memory', action='store', type=int, default=-1,
-        help=help_message
-    )
-    parser.add_argument('-d', '--frame-doubled',
+        help=help_message)
+    parser.add_argument(
+        '-d', '--frame-doubled',
         dest='frame_doubled', default=False, action='store_true',
-        help="The input raw data is frame doubled."
-    )
+        help="The input raw data is frame doubled.")
     parser.add_argument(
         '--plot-changed', dest='plot_changed', default=False,
         action='store_true',
-        help="Plot parameters which have changed since the last processing."
-    )
+        help="Plot parameters which have changed since the last processing.")
     parser.add_argument(
         '--start', dest='percent_start', type=int, default=0,
-        help='Percentage into the file to start inspecting.'
-    )
+        help='Percentage into the file to start inspecting.')
     parser.add_argument(
         '--stop', dest='percent_stop', type=int, default=100,
-        help='Percentage into the file to inspect up until.'
-    )
-    parser.add_argument('--tail', dest='tail_number',
+        help='Percentage into the file to inspect up until.')
+    parser.add_argument(
+        '--tail', dest='tail_number',
         help='Aircraft tail number.')
-    parser.add_argument('--aircraft-model', dest='aircraft_model',
+    parser.add_argument(
+        '--aircraft-model', dest='aircraft_model',
         help='Aircraft model.')
-    parser.add_argument('--aircraft-family', dest='aircraft_family',
+    parser.add_argument(
+        '--aircraft-family', dest='aircraft_family',
         help='Aircraft family.')
-    parser.add_argument('--aircraft-series', dest='aircraft_series',
+    parser.add_argument(
+        '--aircraft-series', dest='aircraft_series',
         help='Aircraft series.')
-    parser.add_argument('--engine-series', dest='engine_series',
+    parser.add_argument(
+        '--engine-series', dest='engine_series',
         help='Engine series.')
-    parser.add_argument('--engine-manufacturer', dest='engine_manufacturer',
+    parser.add_argument(
+        '--engine-manufacturer', dest='engine_manufacturer',
         help='Engine manufacturer.')
-    parser.add_argument('--engine-type', dest='engine_type',
+    parser.add_argument(
+        '--engine-type', dest='engine_type',
         help='Engine type.')
-    parser.add_argument('-s', '--stretched', dest='stretched',
+    parser.add_argument(
+        '-s', '--stretched', dest='stretched',
         help="Name of frame Stretched definition to apply.")
 
     return parser
@@ -174,7 +175,7 @@ def validate_args(parser):
             os.path.splitext(os.path.basename(args.data_path))[0] + '.hdf5')
 
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
-        parser.error('Superframes in memory argument must be -1 or positive. '\
+        parser.error('Superframes in memory argument must be -1 or positive. '
                      'Found %s' % args.superframes_in_memory)
 
     aircraft_info = {
