@@ -17,6 +17,7 @@ import sys
 import tempfile
 import threading
 import time
+import traceback
 import wx
 
 import numpy as np
@@ -296,7 +297,7 @@ def plot_parameters(params, axes, title=''):
                           "parameter '%s'" % param.name
                     array = np_ma_masked_zeros_like(param.array)
 
-            if param.units == None:
+            if param.units is None:
                 label_text += " [No units]"
             else:
                 label_text += " : " + param.units
@@ -444,6 +445,7 @@ class ProcessAndPlotLoops(threading.Thread):
                 'frame doubling is declared if applicable as well as both ' \
                 'the LFL and raw data file are correct. Exception:\n%s' % err
             self._queue_error_message('Processing failed!', message)
+            traceback.print_exc()
             raise ProcessError(message)
 
         print 'Finished processing, output: %s' % output_path
