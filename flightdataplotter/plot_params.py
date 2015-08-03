@@ -32,8 +32,6 @@ from compass.arinc717.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
 
-
-# Must appear before the following imports.
 matplotlib.use('WXAgg')
 
 import matplotlib.pyplot as plt
