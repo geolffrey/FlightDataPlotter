@@ -24,7 +24,7 @@ import numpy as np
 
 from datetime import datetime
 
-from analysis_engine.library import align, np_ma_masked_zeros_like
+from analysis_engine.library import align
 
 from compass.compass_cli import configobj_error_message
 from compass.arinc717.data_frame_parser import parse_lfl
@@ -279,22 +279,21 @@ def plot_parameters(params, axes, title=''):
             # Data is aligned in time but the samples are not interpolated so
             # that scaling issues can be easily addressed
             label_text = param.name
+            args = []
             if np.ma.all(param.array.mask):
-                array = []
+                args.append([])
                 label_text += ' <ALL MASKED>'
             elif param.data_type == 'ASCII' or param.array.dtype.char == 'S':
                 print "Warning: ASCII not supported. Param '%s'" % param
-                array = []
+                args.append([])
                 label_text += ' <ASCII NOT DRAWN>'
-            else:
+            elif param.hz != max_freq:
                 # Data is aligned in time but the samples are not
                 # interpolated so that scaling issues can be easily addressed
-                try:
-                    array = align(param, param_max_freq, interpolate=False)
-                except:
-                    print "Warning: Unable to align data, so not drawing "\
-                          "parameter '%s'" % param.name
-                    array = np_ma_masked_zeros_like(param.array)
+                args.append(np.arange(len(param.array)) * (max_freq / param.hz))
+                args.append(param.array)
+            else:
+                args.append(param.array)
 
             if param.units is None:
                 label_text += " [No units]"
@@ -303,7 +302,7 @@ def plot_parameters(params, axes, title=''):
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
-            axis.plot(array, label=label_text)
+            axis.plot(*args, label=label_text)
             axis.legend(loc='upper right', **legendprops)
             if index < len(axes):
                 setp(axis.get_xticklabels(), visible=False)
