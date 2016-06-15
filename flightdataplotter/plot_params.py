@@ -120,7 +120,7 @@ def copy_file_part(src_path, percent_start=0, percent_stop=100):
     TODO: Move to flightdatautilities.filesystem_tools ?
     '''
 
-    from compass.utils import open_raw_data
+    from flightdatautilities.filesystem_tools import open_raw_data
     ext = '_%d->%d.dat' % (percent_start, percent_stop)
     dest_path = os.path.splitext(src_path)[0] + ext
     if os.path.isfile(dest_path) and os.path.getsize(dest_path):
