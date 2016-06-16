@@ -121,7 +121,7 @@ def copy_file_part(src_path, percent_start=0, percent_stop=100):
     '''
 
     from flightdatautilities.filesystem_tools import open_raw_data
-    ext = '_%d->%d.dat' % (percent_start, percent_stop)
+    ext = '_%d-%d.dat' % (percent_start, percent_stop)
     dest_path = os.path.splitext(src_path)[0] + ext
     if os.path.isfile(dest_path) and os.path.getsize(dest_path):
         print 'Partial file already exists; using: %s' % dest_path
