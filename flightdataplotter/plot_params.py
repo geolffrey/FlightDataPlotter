@@ -424,7 +424,7 @@ class ProcessAndPlotLoops(threading.Thread):
 
         try:
             lfl_parser, param_list = parse_lfl(
-                lfl_path, param_names=param_names, aircraft_info=aircraft_info)
+                lfl_path, param_names=param_names, aircraft_info=aircraft_info, required=False)
         except configobj.ConfigObjError as err:
             message = configobj_error_message(err)
             self._queue_error_message('Error while parsing LFL!', message)
