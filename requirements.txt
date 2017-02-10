@@ -1,6 +1,7 @@
 analysisengine
 compass
 flightdatautilities
+future
 h5py
 matplotlib
 numpy

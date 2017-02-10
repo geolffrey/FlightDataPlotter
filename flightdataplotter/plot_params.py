@@ -6,6 +6,8 @@ This application plots LFL parameters and is intended to provide quick feedback
 to people altering LFL definitions.
 '''
 
+from __future__ import print_function
+
 import argparse
 import configobj
 import itertools
@@ -23,6 +25,7 @@ import wx
 import numpy as np
 
 from datetime import datetime
+from past.builtins import basestring
 
 from analysis_engine.library import align
 
@@ -124,7 +127,7 @@ def copy_file_part(src_path, percent_start=0, percent_stop=100):
     ext = '_%d-%d.dat' % (percent_start, percent_stop)
     dest_path = os.path.splitext(src_path)[0] + ext
     if os.path.isfile(dest_path) and os.path.getsize(dest_path):
-        print 'Partial file already exists; using: %s' % dest_path
+        print('Partial file already exists; using: %s' % dest_path)
         return dest_path
     try:
         src = open_raw_data(src_path)
@@ -165,7 +168,7 @@ def validate_args(parser):
     if args.percent_start > 0 or args.percent_stop < 100:
         args.data_path = copy_file_part(
             args.data_path, args.percent_start, args.percent_stop)
-        print "Read data chunk into new file: %s" % args.data_path
+        print("Read data chunk into new file: %s" % args.data_path)
 
     if not args.output_path:
         args.output_path = os.path.join(
@@ -213,15 +216,15 @@ def plot_parameters(params, axes, title=''):
     '''
     Plot resulting parameters.
     '''
-    print 'Plotting parameters.'
+    print('Plotting parameters.')
     max_freq = 0
     min_freq = float('inf')
 
-    for name, param in params.iteritems():
+    for name, param in params.items():
         max_freq = max(max_freq, param.frequency)
         min_freq = min(min_freq, param.frequency)
 
-    for param_name, param in params.iteritems():
+    for param_name, param in params.items():
         if max_freq == param.frequency:
             param_max_freq = param
         if param.frequency == min_freq:
@@ -229,11 +232,11 @@ def plot_parameters(params, axes, title=''):
 
     # Truncate parameter arrays to successfully align them since the file
     # has not been through split sections.
-    for param_name, param in params.iteritems():
+    for param_name, param in params.items():
         array_len = param_min_freq_len * (param.frequency / min_freq)
         if array_len != len(param.array):
-            print 'Truncated %s from %d to %d for display purposes' % (
-                param_name, len(param.array), array_len)
+            print('Truncated %s from %d to %d for display purposes' % (
+                param_name, len(param.array), array_len))
             param.array = param.array[:array_len]
 
     #==========================================================================
@@ -267,7 +270,7 @@ def plot_parameters(params, axes, title=''):
     setp(first_axis.get_xticklabels(), visible=False)
 
     # Now plot the additional data from the AXIS_N lists at the top of the lfl
-    for index, param_names in axes.iteritems():
+    for index, param_names in axes.items():
         if index == 1:
             continue
         axis = fig.add_subplot(len(axes), 1, index, sharex=first_axis)
@@ -284,7 +287,7 @@ def plot_parameters(params, axes, title=''):
                 args.append([])
                 label_text += ' <ALL MASKED>'
             elif param.data_type == 'ASCII' or param.array.dtype.char == 'S':
-                print "Warning: ASCII not supported. Param '%s'" % param
+                print("Warning: ASCII not supported. Param '%s'" % param)
                 args.append([])
                 label_text += ' <ASCII NOT DRAWN>'
             elif param.hz != max_freq:
@@ -380,7 +383,7 @@ class ProcessAndPlotLoops(threading.Thread):
             raise ValueError(message)
 
         if self._last_config:
-            for param_name, param_conf in config['Parameters'].iteritems():
+            for param_name, param_conf in config['Parameters'].items():
                 # TODO: Param added, not only changed.
                 if param_name in self._last_config['Parameters'] and \
                    param_conf != self._last_config['Parameters'][param_name]:
@@ -434,7 +437,7 @@ class ProcessAndPlotLoops(threading.Thread):
         if param_errors:
             self._queue_error_message('Parameter Errors', param_errors)
 
-        print 'Processing params: %s' % ', '.join([p.name for p in param_list])
+        print('Processing params: %s' % ', '.join([p.name for p in param_list]))
         try:
             create_hdf(data_path, output_path, lfl_parser.frame, param_list,
                        superframes_in_memory=superframes_in_memory)
@@ -446,7 +449,7 @@ class ProcessAndPlotLoops(threading.Thread):
             traceback.print_exc()
             raise ProcessError(message)
 
-        print 'Finished processing, output: %s' % output_path
+        print('Finished processing, output: %s' % output_path)
         return axes
 
     def run(self):
@@ -463,8 +466,8 @@ class ProcessAndPlotLoops(threading.Thread):
                     self._axes = self._function()
                 except ValueError:
                     continue
-                except ProcessError, x:
-                    print x
+                except ProcessError as err:
+                    print(err)
                     self.exit_loop.set()
                     return
                 else:
@@ -497,11 +500,11 @@ class ProcessAndPlotLoops(threading.Thread):
                     title = os.path.basename(self._hdf_path)
                     plot_parameters(params, self._axes, title=title)
                 except ValueError as err:
-                    print 'Waiting for you to fix this error: %s' % err
+                    print('Waiting for you to fix this error: %s' % err)
                 except Exception as err:
                     # traceback required?
-                    print 'Exception raised! %s: %s' % (err.__class__.__name__,
-                                                        err)
+                    print('Exception raised! %s: %s' % (err.__class__.__name__,
+                                                        err))
             else:
                 time.sleep(1)
 
@@ -569,10 +572,10 @@ def data_file_dialog():
 
 
 def main():
-    print 'FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.'
-    print '  - Powered by POLARIS'
-    print '  - http://www.flightdatacommunity.com'
-    print ''
+    print('FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.')
+    print('  - Powered by POLARIS')
+    print('  - http://www.flightdatacommunity.com')
+    print('')
 
     parser = create_parser()
     plot_args = validate_args(parser)
@@ -587,7 +590,7 @@ def main():
     try:
         process_thread.plot_loop()
     except KeyboardInterrupt:
-        print 'Setting exit_loop event.'
+        print('Setting exit_loop event.')
         process_thread.exit_loop.set()
     finally:
         # If the file is in a temporary location, remove it.
@@ -595,9 +598,9 @@ def main():
            and os.path.isfile(hdf_path):
             try:
                 os.remove(hdf_path)
-                print 'Removed temporary HDF file: %s.' % hdf_path
+                print('Removed temporary HDF file: %s.' % hdf_path)
             except (OSError, IOError):
-                print 'Could not remove temporary HDF file: %s.' % hdf_path
+                print('Could not remove temporary HDF file: %s.' % hdf_path)
 
 
 if __name__ == '__main__':
