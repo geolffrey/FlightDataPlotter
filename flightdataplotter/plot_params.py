@@ -108,6 +108,10 @@ def create_parser():
     parser.add_argument(
         '-s', '--stretched', dest='stretched',
         help="Name of frame Stretched definition to apply.")
+    parser.add_argument(
+        '-m', '--show-masked', dest='mask_flag', action='store_true',
+        help="Show masked data."
+    )
 
     return parser
 
@@ -204,6 +208,7 @@ def validate_args(parser):
         args.output_path,
         args.superframes_in_memory,
         args.plot_changed,
+        args.mask_flag,
         aircraft_info,
     )
 
@@ -212,7 +217,7 @@ def validate_args(parser):
 ###############################################################################
 
 
-def plot_parameters(params, axes, title=''):
+def plot_parameters(params, axes, mask_flag, title=''):
     '''
     Plot resulting parameters.
     '''
@@ -263,7 +268,10 @@ def plot_parameters(params, axes, title=''):
     param = params[param_name]
     array = align(param, param_max_freq)
     first_axis = fig.add_subplot(len(axes), 1, 1)
-    first_axis.plot(array, label=param_name)
+    if mask_flag:
+        first_axis.plot(array.data, label=param_name)
+    else:
+        first_axis.plot(array, label=param_name)
 
     ####plt.title("Processed on %s" %
     ####          datetime.now().strftime('%A, %d %B %Y at %X'))
@@ -305,6 +313,8 @@ def plot_parameters(params, axes, title=''):
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
+            if mask_flag:
+                param.array.mask = False
             axis.plot(*args, label=label_text)
             axis.legend(loc='upper right', **legendprops)
             if index < len(axes):
@@ -361,7 +371,7 @@ class ProcessAndPlotLoops(threading.Thread):
         return message
 
     def process_data(self, lfl_path, data_path, output_path,
-                     superframes_in_memory, plot_changed, aircraft_info):
+                     superframes_in_memory, plot_changed, mask_flag, aircraft_info):
         '''
         :param lfl_path: Path of LFL file.
         :type lfl_path: str
@@ -477,7 +487,7 @@ class ProcessAndPlotLoops(threading.Thread):
             else:
                 time.sleep(1)
 
-    def plot_loop(self):
+    def plot_loop(self, mask_flag):
         '''
         The plotting loop.
         '''
@@ -498,7 +508,7 @@ class ProcessAndPlotLoops(threading.Thread):
                         # required were converted earlier into the HDF file
                         params = hdf.get_params()
                     title = os.path.basename(self._hdf_path)
-                    plot_parameters(params, self._axes, title=title)
+                    plot_parameters(params, self._axes, mask_flag, title=title)
                 except ValueError as err:
                     print('Waiting for you to fix this error: %s' % err)
                 except Exception as err:
@@ -583,12 +593,13 @@ def main():
     lfl_path = plot_args[0]
     hdf_path = plot_args[2]
     plot_changed = plot_args[4]
+    mask_flag = plot_args[5]
     plot_func = lambda: process_thread.process_data(*plot_args)
     process_thread = ProcessAndPlotLoops(hdf_path, plot_changed,
                                          lfl_path, plot_func)
     process_thread.start()
     try:
-        process_thread.plot_loop()
+        process_thread.plot_loop(mask_flag)
     except KeyboardInterrupt:
         print('Setting exit_loop event.')
         process_thread.exit_loop.set()
