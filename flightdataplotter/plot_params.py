@@ -122,20 +122,18 @@ def create_parser():
                         "To display more, use --axis2 and so on (limited to 6). \n" \
                         "Only available for csv and hdf5 formats. \n" \
                         "If displaying multiple parameters put them in quotes and separate by spaces,. \n"\
-                        "For example: --axis1 \"Airspeed\" \"Altitude AGL\""
+                        "For example: --axis2 \"Airspeed\" \"Altitude AGL\""
     parser.add_argument(
-        '--axis1', dest='axis1', nargs="*",
+        '--axis2', dest='axis2', nargs="*",
         help=help_message_axis)
     parser.add_argument(
-        '--axis2', dest='axis2')
+        '--axis3', dest='axis3', nargs="*",)
     parser.add_argument(
-        '--axis3', dest='axis3')
+        '--axis4', dest='axis4', nargs="*",)
     parser.add_argument(
-        '--axis4', dest='axis4')
+        '--axis5', dest='axis5', nargs="*",)
     parser.add_argument(
-        '--axis5', dest='axis5')
-    parser.add_argument(
-        '--axis6', dest='axis6')
+        '--axis6', dest='axis6', nargs="*",)
 
     return parser
 
@@ -238,7 +236,6 @@ def validate_args(parser):
         args.mask_flag,
         args.csv_flag,
         args.hdf_flag,
-        args.axis1,
         args.axis2,
         args.axis3,
         args.axis4,
@@ -356,6 +353,23 @@ def plot_parameters(params, axes, mask_flag, title=''):
                 setp(axis.get_xticklabels(), visible=False)
         plt.legend(prop={'size': 10})
     plt.show()
+
+
+def process_raw_hdf(hdf, axes):
+    with hdf_file(hdf) as h:
+        params = h.get_params()
+
+    params_to_plot = {}
+    for axis in axes:
+        if axis is not None:
+            for param in axis:
+                try:
+                    params_to_plot[param] = params[param]
+                except KeyError:
+                    print('Parameter %s was not found in the HDF file.' % param)
+
+    filtered_axes = {i+1: a for i, a in enumerate(filter(None, axes))}
+    return params_to_plot, filtered_axes
 
 
 # Processing and plotting loops
@@ -631,23 +645,23 @@ def main():
     lfl_path = plot_args[0]
     data_path = plot_args[1]
     hdf_path = plot_args[2]
+    superframes_in_memory=plot_args[3]
     plot_changed = plot_args[4]
     mask_flag = plot_args[5]
     csv_flag = plot_args[6]
     hdf_flag = plot_args[7]
-    axis1 = plot_args[8]
-    axis2 = plot_args[9]
-    axis3 = plot_args[10]
-    axis4 = plot_args[11]
-    axis5 = plot_args[12]
-    axis6 = plot_args[13]
+    axes = [['Altitude STD'], plot_args[8], plot_args[9], plot_args[10], plot_args[11], plot_args[12]]
+    aircraft_info = plot_args[13]
 
     if hdf_flag:
+        params, axes = process_raw_hdf(data_path, axes)
+        plot_parameters(params, axes, mask_flag)
         pass
     elif csv_flag:
         pass
     else:
-        plot_func = lambda: process_thread.process_data(lfl_path, hdf_path, )
+        plot_func = lambda: process_thread.process_data(lfl_path, data_path, hdf_path, superframes_in_memory,
+                                                        plot_changed, mask_flag, aircraft_info)
         process_thread = ProcessAndPlotLoops(hdf_path, plot_changed,
                                              lfl_path, plot_func)
         process_thread.start()
