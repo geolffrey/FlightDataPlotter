@@ -30,6 +30,7 @@ from argparse import RawTextHelpFormatter
 
 from analysis_engine.library import align
 
+import compass
 from compass.compass_cli import configobj_error_message
 from compass.arinc717.data_frame_parser import parse_lfl
 from compass.arinc717.hdf import create_hdf
@@ -41,6 +42,15 @@ matplotlib.use('WXAgg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from pylab import setp
+
+
+CSV_FUNCTIONS = {
+    'hfdm': compass.process_hfdm_csv_data,
+    'latitude': compass.process_latitude_data,
+    'chinook': compass.process_chinook_data,
+    'dash8': compass.process_dash8_data,
+    'g1000': compass.process_garmin1000_data,
+}
 
 
 app = wx.App()
@@ -113,8 +123,10 @@ def create_parser():
         '-m', '--show-masked', dest='mask_flag', action='store_true',
         help="Show masked data.")
     parser.add_argument(
-        '--csv', dest='csv_flag', action='store_true',
-        help="Process CSV file")
+        '--csv', dest='csv_type',
+        help="Process CSV file, options are: \n" \
+             "hfdm, g1000, dash8, latitude, chinook \n" \
+             "Example: --csv hfdm; --csv g1000; --csv dash8")
     parser.add_argument(
         '--hdf', dest='hdf_flag', action='store_true',
         help="Process HDF5 file")
@@ -181,9 +193,9 @@ def validate_args(parser):
     Validate arguments provided to argparse.
     '''
     args = parser.parse_args()
-    if not (args.csv_flag or args.hdf_flag) and not args.lfl_path:
+    if not (args.csv_type or args.hdf_flag) and not args.lfl_path:
         args.lfl_path = lfl_file_dialog()
-    if not (args.csv_flag or args.hdf_flag) and not os.path.isfile(args.lfl_path):
+    if not (args.csv_type or args.hdf_flag) and not os.path.isfile(args.lfl_path):
         parser.error('LFL file path not valid: %s' % args.lfl_path)
 
     if not args.data_path:
@@ -204,9 +216,6 @@ def validate_args(parser):
     if args.superframes_in_memory == 0 or args.superframes_in_memory < -1:
         parser.error('Superframes in memory argument must be -1 or positive. '
                      'Found %s' % args.superframes_in_memory)
-
-    if (args.csv_flag or args.mask_flag) and not args.axis1:
-        parser.error('You need to specify at least one axis for CSV and HDF files.')
 
     aircraft_info = {
         'Frame Doubled': args.frame_doubled,
@@ -234,7 +243,7 @@ def validate_args(parser):
         args.superframes_in_memory,
         args.plot_changed,
         args.mask_flag,
-        args.csv_flag,
+        args.csv_type,
         args.hdf_flag,
         args.axis2,
         args.axis3,
@@ -341,7 +350,7 @@ def plot_parameters(params, axes, mask_flag, title=''):
             if param.units is None:
                 label_text += " [No units]"
             else:
-                label_text += " : " + param.units
+                label_text += " : " + bytes.decode(param.units)
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
@@ -648,7 +657,7 @@ def main():
     superframes_in_memory=plot_args[3]
     plot_changed = plot_args[4]
     mask_flag = plot_args[5]
-    csv_flag = plot_args[6]
+    csv_type = plot_args[6]
     hdf_flag = plot_args[7]
     axes = [['Altitude STD'], plot_args[8], plot_args[9], plot_args[10], plot_args[11], plot_args[12]]
     aircraft_info = plot_args[13]
@@ -657,8 +666,11 @@ def main():
         params, axes = process_raw_hdf(data_path, axes)
         plot_parameters(params, axes, mask_flag)
         pass
-    elif csv_flag:
-        pass
+    elif csv_type:
+        parameters = [item for sublist in filter(None, axes) for item in sublist]
+        CSV_FUNCTIONS[csv_type](csv_file_path, output_path, parameters=parameters)
+        params, axes = process_raw_hdf(hdf_path, axes)
+        plot_parameters(params, axes, mask_flag)
     else:
         plot_func = lambda: process_thread.process_data(lfl_path, data_path, hdf_path, superframes_in_memory,
                                                         plot_changed, mask_flag, aircraft_info)
