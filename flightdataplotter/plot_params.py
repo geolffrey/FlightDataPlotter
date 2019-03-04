@@ -26,9 +26,11 @@ import numpy as np
 
 from datetime import datetime
 from past.builtins import basestring
+from argparse import RawTextHelpFormatter
 
 from analysis_engine.library import align
 
+import compass
 from compass.compass_cli import configobj_error_message
 from compass.arinc717.data_frame_parser import parse_lfl
 from compass.arinc717.hdf import create_hdf
@@ -42,7 +44,16 @@ import matplotlib.font_manager as fm
 from pylab import setp
 
 
-app = wx.PySimpleApp()
+CSV_FUNCTIONS = {
+    'hfdm': compass.process_hfdm_csv_data,
+    'latitude': compass.process_latitude_data,
+    'chinook': compass.process_chinook_data,
+    'dash8': compass.process_dash8_data,
+    'g1000': compass.process_garmin1000_data,
+}
+
+
+app = wx.App()
 
 
 # Argument parsing.
@@ -50,11 +61,11 @@ app = wx.PySimpleApp()
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        description='Plot parameters when an LFL file changes.')
+        description='Plot parameters when an LFL file changes.', formatter_class=RawTextHelpFormatter)
     parser.add_argument(
-        'lfl_path', nargs='?',
+        '-l', '--lfl', dest='lfl_path', nargs='?',
         help='Path of LFL file. If not provided, GUI File Browser will appear.')
-    parser.add_argument('data_path', nargs='?', help='Path of raw data file.')
+    parser.add_argument('-r', '--raw-data', dest='data_path', nargs='?', help='Path of raw data file.')
     #parser.add_argument('--read-percent') # TODO!! 0 to 100
     parser.add_argument(
         '-o', '--output-path', dest='output_path',
@@ -63,13 +74,13 @@ def create_parser():
     parser.add_argument(
         '-c', dest='cli', action='store_true',
         help='Use command line arguments rather than file dialogs.')
-    help_message = "Number of superframes stored in memory before writing " \
-        "to HDF5 file. A value of 0 will cause all superframes to be " \
+    help_message_superframes = "Number of superframes stored in memory before writing \n" \
+        "to HDF5 file. A value of 0 will cause all superframes to be \n" \
         "stored in memory. Default is 100 superframes."
     parser.add_argument(
         '--superframes-in-memory',
         dest='superframes_in_memory', action='store', type=int, default=-1,
-        help=help_message)
+        help=help_message_superframes)
     parser.add_argument(
         '-d', '--frame-doubled',
         dest='frame_doubled', default=False, action='store_true',
@@ -110,8 +121,31 @@ def create_parser():
         help="Name of frame Stretched definition to apply.")
     parser.add_argument(
         '-m', '--show-masked', dest='mask_flag', action='store_true',
-        help="Show masked data."
-    )
+        help="Show masked data.")
+    parser.add_argument(
+        '--csv', dest='csv_type',
+        help="Process CSV file, options are: \n" \
+             "hfdm, g1000, dash8, latitude, chinook \n" \
+             "Example: --csv hfdm; --csv g1000; --csv dash8")
+    parser.add_argument(
+        '--hdf', dest='hdf_flag', action='store_true',
+        help="Process HDF5 file")
+    help_message_axis = "Specify a list of parameters to display on axis 1. \n" \
+                        "To display more, use --axis2 and so on (limited to 6). \n" \
+                        "Only available for csv and hdf5 formats. \n" \
+                        "If displaying multiple parameters put them in quotes and separate by spaces,. \n"\
+                        "For example: --axis2 \"Airspeed\" \"Altitude AGL\""
+    parser.add_argument(
+        '--axis2', dest='axis2', nargs="*",
+        help=help_message_axis)
+    parser.add_argument(
+        '--axis3', dest='axis3', nargs="*",)
+    parser.add_argument(
+        '--axis4', dest='axis4', nargs="*",)
+    parser.add_argument(
+        '--axis5', dest='axis5', nargs="*",)
+    parser.add_argument(
+        '--axis6', dest='axis6', nargs="*",)
 
     return parser
 
@@ -159,9 +193,9 @@ def validate_args(parser):
     Validate arguments provided to argparse.
     '''
     args = parser.parse_args()
-    if not args.lfl_path:
+    if not (args.csv_type or args.hdf_flag) and not args.lfl_path:
         args.lfl_path = lfl_file_dialog()
-    if not os.path.isfile(args.lfl_path):
+    if not (args.csv_type or args.hdf_flag) and not os.path.isfile(args.lfl_path):
         parser.error('LFL file path not valid: %s' % args.lfl_path)
 
     if not args.data_path:
@@ -209,6 +243,13 @@ def validate_args(parser):
         args.superframes_in_memory,
         args.plot_changed,
         args.mask_flag,
+        args.csv_type,
+        args.hdf_flag,
+        args.axis2,
+        args.axis3,
+        args.axis4,
+        args.axis5,
+        args.axis6,
         aircraft_info,
     )
 
@@ -309,7 +350,7 @@ def plot_parameters(params, axes, mask_flag, title=''):
             if param.units is None:
                 label_text += " [No units]"
             else:
-                label_text += " : " + param.units
+                label_text += " : " + param.units.decode()
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
@@ -321,6 +362,23 @@ def plot_parameters(params, axes, mask_flag, title=''):
                 setp(axis.get_xticklabels(), visible=False)
         plt.legend(prop={'size': 10})
     plt.show()
+
+
+def process_raw_hdf(hdf, axes):
+    with hdf_file(hdf) as h:
+        params = h.get_params()
+
+    params_to_plot = {}
+    for axis in axes:
+        if axis is not None:
+            for param in axis:
+                try:
+                    params_to_plot[param] = params[param]
+                except KeyError:
+                    print('Parameter %s was not found in the HDF file.' % param)
+
+    filtered_axes = dict(enumerate(filter(None, axes), start=1))
+    return params_to_plot, filtered_axes
 
 
 # Processing and plotting loops
@@ -487,6 +545,9 @@ class ProcessAndPlotLoops(threading.Thread):
             else:
                 time.sleep(1)
 
+    def process_hdf_axis(self, hdf_file, axis1, axis2, axis3, axis4, axis5, axis6):
+        pass
+
     def plot_loop(self, mask_flag):
         '''
         The plotting loop.
@@ -582,7 +643,7 @@ def data_file_dialog():
 
 
 def main():
-    print('FlightDataPlotter (c) Copyright 2013 Flight Data Services, Ltd.')
+    print('FlightDataPlotter (c) Copyright 2019 Flight Data Services, Ltd.')
     print('  - Powered by POLARIS')
     print('  - http://www.flightdatacommunity.com')
     print('')
@@ -591,27 +652,45 @@ def main():
     plot_args = validate_args(parser)
 
     lfl_path = plot_args[0]
+    data_path = plot_args[1]
     hdf_path = plot_args[2]
+    superframes_in_memory=plot_args[3]
     plot_changed = plot_args[4]
     mask_flag = plot_args[5]
-    plot_func = lambda: process_thread.process_data(*plot_args)
-    process_thread = ProcessAndPlotLoops(hdf_path, plot_changed,
-                                         lfl_path, plot_func)
-    process_thread.start()
-    try:
-        process_thread.plot_loop(mask_flag)
-    except KeyboardInterrupt:
-        print('Setting exit_loop event.')
-        process_thread.exit_loop.set()
-    finally:
-        # If the file is in a temporary location, remove it.
-        if hdf_path.startswith(tempfile.gettempdir()) \
-           and os.path.isfile(hdf_path):
-            try:
-                os.remove(hdf_path)
-                print('Removed temporary HDF file: %s.' % hdf_path)
-            except (OSError, IOError):
-                print('Could not remove temporary HDF file: %s.' % hdf_path)
+    csv_type = plot_args[6]
+    hdf_flag = plot_args[7]
+    axes = [['Altitude STD'], plot_args[8], plot_args[9], plot_args[10], plot_args[11], plot_args[12]]
+    aircraft_info = plot_args[13]
+
+    if hdf_flag:
+        params, axes = process_raw_hdf(data_path, axes)
+        plot_parameters(params, axes, mask_flag)
+        pass
+    elif csv_type:
+        parameters = [item for sublist in filter(None, axes) for item in sublist]
+        CSV_FUNCTIONS[csv_type](csv_file_path, output_path, parameters=parameters)
+        params, axes = process_raw_hdf(hdf_path, axes)
+        plot_parameters(params, axes, mask_flag)
+    else:
+        plot_func = lambda: process_thread.process_data(lfl_path, data_path, hdf_path, superframes_in_memory,
+                                                        plot_changed, mask_flag, aircraft_info)
+        process_thread = ProcessAndPlotLoops(hdf_path, plot_changed,
+                                             lfl_path, plot_func)
+        process_thread.start()
+        try:
+            process_thread.plot_loop(mask_flag)
+        except KeyboardInterrupt:
+            print('Setting exit_loop event.')
+            process_thread.exit_loop.set()
+        finally:
+            # If the file is in a temporary location, remove it.
+            if hdf_path.startswith(tempfile.gettempdir()) \
+               and os.path.isfile(hdf_path):
+                try:
+                    os.remove(hdf_path)
+                    print('Removed temporary HDF file: %s.' % hdf_path)
+                except (OSError, IOError):
+                    print('Could not remove temporary HDF file: %s.' % hdf_path)
 
 
 if __name__ == '__main__':
