@@ -350,7 +350,10 @@ def plot_parameters(params, axes, mask_flag, title=''):
             if param.units is None:
                 label_text += " [No units]"
             else:
-                label_text += " : " + param.units.decode()
+                if not isinstance(param.units, str):
+                    label_text += " : " + param.units.decode()
+                else:
+                    label_text += " : " + param.units
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
