@@ -350,7 +350,7 @@ def plot_parameters(params, axes, mask_flag, title=''):
             if param.units is None:
                 label_text += " [No units]"
             else:
-                label_text += " : " + bytes.decode(param.units)
+                label_text += " : " + param.units.decode()
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
@@ -377,7 +377,7 @@ def process_raw_hdf(hdf, axes):
                 except KeyError:
                     print('Parameter %s was not found in the HDF file.' % param)
 
-    filtered_axes = {i+1: a for i, a in enumerate(filter(None, axes))}
+    filtered_axes = dict(enumerate(filter(None, axes), start=1))
     return params_to_plot, filtered_axes
 
 
