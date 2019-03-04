@@ -350,7 +350,10 @@ def plot_parameters(params, axes, mask_flag, title=''):
             if param.units is None:
                 label_text += " [No units]"
             else:
-                label_text += " : " + param.units.decode()
+                if not isinstance(param.units, str):
+                    label_text += " : " + param.units.decode()
+                else:
+                    label_text += " : " + param.units
             values_mapping = getattr(param.array, 'values_mapping', None)
             if values_mapping:
                 label_text += '\n%s' % values_mapping
@@ -668,7 +671,7 @@ def main():
         pass
     elif csv_type:
         parameters = [item for sublist in filter(None, axes) for item in sublist]
-        CSV_FUNCTIONS[csv_type](csv_file_path, output_path, parameters=parameters)
+        CSV_FUNCTIONS[csv_type](data_path, hdf_path, parameters=parameters)
         params, axes = process_raw_hdf(hdf_path, axes)
         plot_parameters(params, axes, mask_flag)
     else:
