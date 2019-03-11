@@ -28,6 +28,8 @@ from datetime import datetime
 from past.builtins import basestring
 from argparse import RawTextHelpFormatter
 
+import flightdataaccessor as fda
+
 from analysis_engine.library import align
 
 import compass
@@ -35,9 +37,7 @@ from compass.compass_cli import configobj_error_message
 from compass.arinc717.data_frame_parser import parse_lfl
 from compass.arinc717.hdf import create_hdf
 
-from hdfaccess.file import hdf_file
-
-matplotlib.use('WXAgg')
+matplotlib.use('WXAgg')  # NOQA
 
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
@@ -567,7 +567,7 @@ class ProcessAndPlotLoops(threading.Thread):
             if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
                 try:
-                    with hdf_file(self._hdf_path) as hdf:
+                    with fda.open(self._hdf_path) as hdf:
                         # iterate over whole file as only those params
                         # required were converted earlier into the HDF file
                         params = hdf.get_params()
