@@ -1,5 +1,5 @@
-analysisengine
-compass
+flightdataanalyzer
+flightdataconverter
 flightdatautilities
 future
 h5py
