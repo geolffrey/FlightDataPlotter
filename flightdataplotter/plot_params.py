@@ -20,7 +20,11 @@ import tempfile
 import threading
 import time
 import traceback
-import wx
+#import wx
+from tkinter.filedialog import askopenfilename
+from tkinter import messagebox
+from tkinter import Tk
+
 
 import numpy as np
 
@@ -37,7 +41,8 @@ from compass.arinc717.hdf import create_hdf
 
 from hdfaccess.file import hdf_file
 
-matplotlib.use('WXAgg')
+matplotlib.use('TkAgg')
+
 
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
@@ -53,7 +58,10 @@ CSV_FUNCTIONS = {
 }
 
 
-app = wx.App()
+#app = wx.App()
+app = Tk()
+app.withdraw()
+plt.ion()
 
 
 # Argument parsing.
@@ -562,7 +570,10 @@ class ProcessAndPlotLoops(threading.Thread):
                 return
             error_message = self._get_error_message()
             if error_message:
-                show_error_dialog(*error_message)
+                #show_error_dialog(*error_message)
+                messagebox.showerror(*error_message)
+                #app.update_idletasks()
+                app.update()
                 continue
             if self._ready_to_plot.is_set():
                 self._ready_to_plot.clear()
@@ -573,6 +584,8 @@ class ProcessAndPlotLoops(threading.Thread):
                         params = hdf.get_params()
                     title = os.path.basename(self._hdf_path)
                     plot_parameters(params, self._axes, mask_flag, title=title)
+                    #app.update_idletasks()
+                    #app.update()
                 except ValueError as err:
                     print('Waiting for you to fix this error: %s' % err)
                 except Exception as err:
@@ -581,68 +594,102 @@ class ProcessAndPlotLoops(threading.Thread):
                                                         err))
             else:
                 time.sleep(1)
+            app.update_idletasks()
+            app.update()
 
 
-class Frame(wx.Frame):
-    '''
-    There a built-in message dialogs which display a message, but they were
-    freezing due to the application's threading model.
-    '''
-    def __init__(self, title, message):
-        wx.Frame.__init__(self, None, title=title)
-        #self.Bind(wx.EVT_CLOSE, self.OnClose)
-        panel = wx.Panel(self)
-        box = wx.BoxSizer(wx.VERTICAL)
+#class Frame(wx.Frame):
+    #'''
+    #There a built-in message dialogs which display a message, but they were
+    #freezing due to the application's threading model.
+    #'''
+    #def __init__(self, title, message):
+        #wx.Frame.__init__(self, None, title=title)
+        ##self.Bind(wx.EVT_CLOSE, self.OnClose)
+        #panel = wx.Panel(self)
+        #box = wx.BoxSizer(wx.VERTICAL)
 
-        m_text = wx.StaticText(panel, -1, message, size=(340, 100),
-                               style=wx.TE_MULTILINE)
-        m_text.SetSize(m_text.GetBestSize())
-        button = wx.Button(panel, label='OK')
-        button.SetDefault()
-        button.Bind(wx.EVT_BUTTON, self.OnClose)
-        box.Add(m_text, flag=wx.ALL)
-        box.Add(button, flag=wx.EXPAND)
+        #m_text = wx.StaticText(panel, -1, message, size=(340, 100),
+                               #style=wx.TE_MULTILINE)
+        #m_text.SetSize(m_text.GetBestSize())
+        #button = wx.Button(panel, label='OK')
+        #button.SetDefault()
+        #button.Bind(wx.EVT_BUTTON, self.OnClose)
+        #box.Add(m_text, flag=wx.ALL)
+        #box.Add(button, flag=wx.EXPAND)
 
-        panel.SetSizerAndFit(box)
-        self.Layout()
-        self.Fit()
+        #panel.SetSizerAndFit(box)
+        #self.Layout()
+        #self.Fit()
 
-    def OnClose(self, event):
-        self.Destroy()
+    #def OnClose(self, event):
+        #self.Destroy()
 
 
-def show_error_dialog(title, message):
-    '''
-    Show error.
-    '''
-    frame = Frame(title, message)
-    frame.Show()
-    app.MainLoop()
+#def show_error_dialog(title, message):
+    #'''
+    #Show error.
+    #'''
+    #frame = Frame(title, message)
+    #frame.Show()
+    #app.MainLoop()
+
+
+'''
+    from tkinter import filedialog
+    from tkinter import *
+
+    root = Tk()
+    root.withdraw() # hides parent window
+    root.filename =  filedialog.askopenfilename(initialdir = "",title = "Please choose a raw data file",filetypes = (("jpeg files","*.lfl"),))
+    print(root.filename)
+
+'''
+
 
 
 def lfl_file_dialog():
-    #TOOD: Remember last directory accessed!
-    lfl_dialog = wx.FileDialog(None, message="Please choose an LFL file",
-                               defaultDir='',
-                               wildcard="*.lfl")
-    if lfl_dialog.ShowModal() == wx.ID_OK:
-        lfl_path = lfl_dialog.GetPath()
-    else:
-        show_error_dialog('Error!', 'An LFL file must be selected.')
-        sys.exit(1)
-    return lfl_path
+    #lfl_dialog = Tk()
+    #lfl_dialog.withdraw()
+    app.lfl_filename = askopenfilename(
+        initialdir = "",
+        title = "Please choose an LFL file",
+        filetypes = (("lfl files","*.lfl"),)
+    )
+    return app.lfl_filename
 
+#def lfl_file_dialog():
+    ##TOOD: Remember last directory accessed!
+    #lfl_dialog = wx.FileDialog(None, message="Please choose an LFL file",
+                               #defaultDir='',
+                               #wildcard="*.lfl")
+    #if lfl_dialog.ShowModal() == wx.ID_OK:
+        #lfl_path = lfl_dialog.GetPath()
+    #else:
+        #show_error_dialog('Error!', 'An LFL file must be selected.')
+        #sys.exit(1)
+    #return lfl_path
 
 def data_file_dialog():
-    data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
-                                defaultDir='',
-                                wildcard="*.*")
-    if data_dialog.ShowModal() == wx.ID_OK:
-        data_path = data_dialog.GetPath()
-    else:
-        show_error_dialog('Error!', 'A raw data file must be selected.')
-        sys.exit(1)
-    return data_path
+    #data_dialog = Tk()
+    #data_dialog.withdraw()
+    app.raw_filename = askopenfilename(
+        initialdir = "",
+        title = "Please choose a raw data file",
+        filetypes = (("all files","*.*"),)
+    )
+    return app.raw_filename
+
+#def data_file_dialog():
+    #data_dialog = wx.FileDialog(None, message="Please choose a raw data file",
+                                #defaultDir='',
+                                #wildcard="*.*")
+    #if data_dialog.ShowModal() == wx.ID_OK:
+        #data_path = data_dialog.GetPath()
+    #else:
+        #show_error_dialog('Error!', 'A raw data file must be selected.')
+        #sys.exit(1)
+    #return data_path
 
 
 def main():
