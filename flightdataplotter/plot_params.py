@@ -25,7 +25,6 @@ import wx
 import numpy as np
 
 from datetime import datetime
-from past.builtins import basestring
 from argparse import RawTextHelpFormatter
 
 from analysis_engine.library import align
@@ -324,7 +323,7 @@ def plot_parameters(params, axes, mask_flag, title=''):
             continue
         axis = fig.add_subplot(len(axes), 1, index, sharex=first_axis)
         # Avoid iterating over string
-        if isinstance(param_names, basestring):
+        if isinstance(param_names, str):
             param_names = [param_names]
         for param_name in param_names:
             param = params[param_name]
