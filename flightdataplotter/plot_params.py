@@ -362,7 +362,7 @@ def plot_parameters(params, axes, mask_flag, title=''):
             axis.legend(loc='upper right', **legendprops)
             if index < len(axes):
                 setp(axis.get_xticklabels(), visible=False)
-        plt.legend(prop={'size': 10})
+        plt.legend(loc='upper right', prop={'size': 10})
     plt.show()
 
 
@@ -474,10 +474,10 @@ class ProcessAndPlotLoops(threading.Thread):
             try:
                 axis = config['Parameter Group'][group_name]
                 # Force a single entry to look like a list.
-                if hasattr(axis, "__iter__"):
-                    axes[group_index + axis_offset] = axis
+                if isinstance(axis, str):
+                    axes[group_index + axis_offset] = [axis,]
                 else:
-                    axes[group_index + axis_offset] = [axis]
+                    axes[group_index + axis_offset] = axis
             except KeyError:
                 break
             group_index += 1
