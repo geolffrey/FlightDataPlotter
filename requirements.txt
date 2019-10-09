@@ -1,7 +1,0 @@
-flightdataanalyzer
-flightdataconverter
-flightdatautilities
-future
-h5py
-matplotlib
-numpy
